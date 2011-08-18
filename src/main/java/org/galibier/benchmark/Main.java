@@ -38,21 +38,17 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import static org.galibier.openflow.Constants.LENGTH_FIELD_LENGTH;
-import static org.galibier.openflow.Constants.LENGTH_FIELD_OFFSET;
-import static org.galibier.openflow.Constants.MAXIMUM_PACKET_LENGTH;
+import static org.galibier.openflow.Constants.*;
 
 public class Main {
-    private static final Logger log = LoggerFactory.getLogger(Main.class);
-
     @Option(name = "-s", aliases = "--switch", usage = "Number of switches")
     private int switches = 16;
 
@@ -68,13 +64,16 @@ public class Main {
     @Option(name = "-m", aliases = "--message", usage = "Bytes of the payload of a packet in")
     private int messageLength = 128;
 
+    @Option(name = "-h", aliases = "--help", usage = "Print this help")
+    private boolean help = false;
+
     @Argument(index = 0, metaVar = "host", required = true, usage = "Host name of the controller")
     private String host;
 
-    private long previousReceivedMessages = 0;
-    private long previousSentPacketIns = 0;
     private List<FakeSwitch> fakeSwitches;
     private List<ClientBootstrap> bootstraps;
+    private long[] previousSentMessages;
+    private long[] previousReceivedMessages;
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ChannelFactory factory = new NioClientSocketChannelFactory(executor, executor);
     private final ChannelGroup channels = new DefaultChannelGroup("emulated-channels");
@@ -86,13 +85,21 @@ public class Main {
         try {
             parser.parseArgument(args);
         } catch (CmdLineException e) {
-            System.err.println("java Main [options] host");
+            help = true;
+        }
+
+        if (help) {
+            System.err.println("java Main [option] host");
             parser.printUsage(System.err);
             System.exit(0);
         }
 
         fakeSwitches = new ArrayList<FakeSwitch>(switches);
         bootstraps = new ArrayList<ClientBootstrap>(switches);
+        previousSentMessages = new long[switches];
+        Arrays.fill(previousSentMessages, 0);
+        previousReceivedMessages = new long[switches];
+        Arrays.fill(previousReceivedMessages, 0);
 
         initialize();
 
@@ -113,14 +120,9 @@ public class Main {
             channels.add(f.getChannel());
         }
         long connectionEndTime = System.nanoTime();
-
-        //  wait until all features reply is received
-        boolean ready = waitForReady(1000);
-        if (!ready) {
-            System.err.println("Could not receive features replies");
-            close();
-            System.exit(1);
-        }
+        long connectionCompletionTime = connectionEndTime - connectionStartTime;
+        double acceptanceRate = (double)switches / (double)connectionCompletionTime * 1.0e9;
+        System.out.println(String.format("Acceptance rate :%.5f connections/sec", acceptanceRate));
 
         long benchmarkStartTime = System.nanoTime();
         for (Channel channel: channels) {
@@ -137,9 +139,13 @@ public class Main {
             }
         }
 
-        long benchmarkEndTime = System.nanoTime();
-
         close();
+
+        long benchmarkEndTime = System.nanoTime();
+        long benchmarkDuration = benchmarkEndTime - connectionEndTime;
+        long totalMessages = totalReceivedMessages();
+        double throughput = (double)totalMessages / (double)benchmarkDuration * 1.0e9;
+        System.out.println(String.format("Overall throughput: %.5f requests/sec", throughput));
     }
 
     private void close() {
@@ -178,23 +184,6 @@ public class Main {
         }
     }
 
-    private boolean waitForReady(int timeout) {
-        long start = System.currentTimeMillis();
-        outside: while (true) {
-            long checked = System.currentTimeMillis();
-            if (checked - start > timeout) {
-                return false;
-            }
-
-            for (FakeSwitch sw: fakeSwitches) {
-                if (!sw.isReadyToStart()) {
-                    continue outside;
-                }
-            }
-            return true;
-        }
-    }
-
     private long totalReceivedMessages() {
         long total = 0;
         for (FakeSwitch fakeSwitch: fakeSwitches) {
@@ -205,15 +194,23 @@ public class Main {
     }
 
     private void outputReport() {
-        long receivedMessages = totalReceivedMessages();
-        long sentPacketIns = totalSentPacketIns();
-        long receivedMessageDifference = receivedMessages - previousReceivedMessages;
-        long sentPacketInDifference = sentPacketIns - previousSentPacketIns;
-        previousReceivedMessages = receivedMessages;
-        previousSentPacketIns = sentPacketIns;
+        System.out.print(String.format("%s switches: ", switches));
+        long totalReceivedMessage = 0;
+        for (int i = 0; i < switches; i++) {
+            FakeSwitch fs = fakeSwitches.get(i);
+            long currentSentMessages = fs.getSentPacketIns();
+            long currentReceivedMessages = fs.getReceivedMessages();
+            long sentMessageDifference = currentSentMessages - previousReceivedMessages[i];
+            long receivedMessageDifference = currentReceivedMessages - previousReceivedMessages[i];
+            totalReceivedMessage += receivedMessageDifference;
+            previousSentMessages[i] = currentSentMessages;
+            previousReceivedMessages[i] = currentReceivedMessages;
 
-        System.out.println(String.format("Received: %d, Sent: %d",
-                receivedMessageDifference, sentPacketInDifference));
+            System.out.print(String.format("%d/%d  ", receivedMessageDifference, sentMessageDifference));
+        }
+
+        System.out.println();
+        System.out.println("Total: " + totalReceivedMessage);
     }
 
     private long totalSentPacketIns() {

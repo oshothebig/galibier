@@ -35,6 +35,7 @@ public class OpenFlowBenchmarkHandler extends SimpleChannelUpstreamHandler{
 
     private FakeSwitch fakeSwitch;
     private volatile long benchmarkEndTime;
+    private Channel channel;
 
     public OpenFlowBenchmarkHandler(FakeSwitch fakeSwitch) {
         this.fakeSwitch = fakeSwitch;
@@ -42,20 +43,24 @@ public class OpenFlowBenchmarkHandler extends SimpleChannelUpstreamHandler{
 
     public void start(long start, int duration) {
         benchmarkEndTime = start + (long)duration * 1000 * 1000;
-        fakeSwitch.sendPacketIn();
+        OFMessage packetIn = fakeSwitch.packetInData();
+        channel.write(packetIn);
     }
 
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         OFMessage in = (OFMessage) e.getMessage();
+        OFMessage out;
         switch (in.getType()) {
             case HELLO:
                 break;
             case ECHO_REQUEST:
-                fakeSwitch.sendEchoReply((OFEchoRequest)in);
+                out = fakeSwitch.echoReplyData((OFEchoRequest)in);
+                ctx.getChannel().write(out);
                 break;
             case FEATURES_REQUEST:
-                fakeSwitch.sendFeatureReply((OFFeaturesRequest)in);
+                out = fakeSwitch.featureReplyData((OFFeaturesRequest)in);
+                ctx.getChannel().write(out);
                 break;
             case PACKET_OUT:
             case FLOW_MOD:
@@ -65,7 +70,13 @@ public class OpenFlowBenchmarkHandler extends SimpleChannelUpstreamHandler{
                 }
                 
                 fakeSwitch.receiveMessages();
-                fakeSwitch.sendPacketIn();
+                out = fakeSwitch.packetInData();
+                ChannelFuture future = ctx.getChannel().write(out);
+                future.addListener(new ChannelFutureListener() {
+                    public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                        fakeSwitch.sendingPacketInCompleted();
+                    }
+                });
                 break;
             default:
                 break;
@@ -74,19 +85,18 @@ public class OpenFlowBenchmarkHandler extends SimpleChannelUpstreamHandler{
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-        e.getCause().printStackTrace();
         ctx.getChannel().close();
     }
 
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        fakeSwitch.setChannel(ctx.getChannel());
-        fakeSwitch.sendHello();
+        channel = ctx.getChannel();
+        OFMessage hello = fakeSwitch.helloData();
+        ctx.getChannel().write(hello);
     }
 
     @Override
     public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        log.info("Channel closed");
         ctx.getChannel().close();
     }
 }

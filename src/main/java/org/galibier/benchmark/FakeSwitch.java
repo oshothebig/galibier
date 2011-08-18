@@ -52,17 +52,13 @@ public class FakeSwitch {
 
     private final OFMessageFactory factory = new BasicFactory();
 
-    private Channel channel;
-
     private final ByteBuffer fakeFeatureReply;
-    private final ByteBuffer fakePacketIn;
 
     private final byte[] packetInPayload;
 
     public FakeSwitch(int dataPathId, int messageLength) {
         this.dataPathId = dataPathId;
         this.fakeFeatureReply = makeFeatureReplyData();
-        this.fakePacketIn = makePacketInData();
         this.packetInPayload = new byte[messageLength];
         Arrays.fill(packetInPayload, (byte)0x00);
     }
@@ -73,12 +69,6 @@ public class FakeSwitch {
             out[i] = (byte)(in[i] & 0xFF);
         }
         return out;
-    }
-
-    public void close() {
-        if (channel != null) {
-            channel.close().awaitUninterruptibly();
-        }
     }
 
     private ByteBuffer makeFeatureReplyData() {
@@ -104,110 +94,39 @@ public class FakeSwitch {
 
         ByteBuffer buf = ByteBuffer.allocate(fakeDataBytes.length);
         buf.put(fakeDataBytes);
+        buf.flip();
 
         return buf;
     }
 
-    private ByteBuffer makePacketInData() {
-        final char[] fakeData = {
-                0x97,0x0a,0x00,0x52,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
-                0x01,0x00,0x40,0x00,0x00,0x00,0x00,0x80,0x00,0x00,0x00,
-                0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x02,0x08,0x00,0x45,
-                0x00,0x00,0x32,0x00,0x00,0x00,0x00,0x40,0xff,0xf7,0x2c,
-                0xc0,0xa8,0x00,0x28,0xc0,0xa8,0x01,0x28,0x7a,0x18,0x58,
-                0x6b,0x11,0x08,0x97,0xf5,0x19,0xe2,0x65,0x7e,0x07,0xcc,
-                0x31,0xc3,0x11,0xc7,0xc4,0x0c,0x8b,0x95,0x51,0x51,0x33,
-                0x54,0x51,0xd5,0x00,0x36
-        };
-
-        final byte[] fakeDataBytes = toUnsignedByteArray(fakeData);
-
-        ByteBuffer buf = ByteBuffer.allocate(fakeDataBytes.length);
-        buf.put(fakeDataBytes);
-
-        return buf;
-    }
-
-    public ChannelFuture sendPacketIn() {
-        if (!channel.isWritable()) {
-            return null;
-        }
-
+    public OFMessage packetInData() {
         OFPacketIn packet = (OFPacketIn)factory.getMessage(OFType.PACKET_IN);
         packet.setBufferId(0);
-        packet.setInPort((short) 0);
+        packet.setInPort((short)0);
         packet.setReason(OFPacketIn.OFPacketInReason.NO_MATCH);
         packet.setPacketData(packetInPayload);
         packet.setXid(nextTransactionId.get());
 
-        ChannelFuture future = channel.write(packet);
-        future.addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                sentPacketOuts.incrementAndGet();
-            }
-        });
-        return future;
-//        fakePacketIn.flip();
-//        OFPacketIn out = (OFPacketIn)factory.parseMessages(fakePacketIn).get(0);
-//        out.setXid(nextTransactionId.get());
-//        out.setBufferId(0);
-//
-//        byte[] data = out.getPacketData();
-//        //  Set source MAC address;
-//        data[1] = ((byte)(nextTransactionId.get() >> 24 & 0xFF));
-//        data[2] = ((byte)(nextTransactionId.get() >> 16 & 0xFF));
-//        data[3] = ((byte)(nextTransactionId.get() >> 8  & 0xFF));
-//        data[4] = ((byte)(nextTransactionId.get() & 0xFF));
-//        data[5] = ((byte)(dataPathId & 0xFF));
-//
-//        //  Set destination MAC address;
-//        data[11] = ((byte)(dataPathId & 0xFF));
-//
-//        out.setPacketData(data);
-//
-//        ChannelFuture future =  channel.write(out);
-//        future.awaitUninterruptibly();
-//        sentPacketOuts.incrementAndGet();
-//        return future;
+        return packet;
     }
 
-    public ChannelFuture sendFeatureReply(OFFeaturesRequest in) {
-        fakeFeatureReply.flip();
-        OFFeaturesReply out = (OFFeaturesReply)factory.parseMessages(fakeFeatureReply).get(0);
-        out.setDatapathId(dataPathId);
-        out.setXid(in.getXid());
+    public OFMessage featureReplyData(OFFeaturesRequest request) {
+        OFFeaturesReply reply = (OFFeaturesReply)factory.parseMessages(fakeFeatureReply).get(0);
+        reply.setDatapathId(dataPathId);
+        reply.setXid(request.getXid());
 
-        log.info("Feature reply sent from {}", channel.getLocalAddress());
-
-        ChannelFuture future = channel.write(out);
-        future.awaitUninterruptibly();
-
-        readyToStart.set(true);
-        return future;
+        return reply;
     }
 
-    public ChannelFuture sendHello() {
-        log.info("Hello sent from {}", channel.getLocalAddress());
-        return channel.write(factory.getMessage(OFType.HELLO));
+    public OFMessage echoReplyData(OFEchoRequest request) {
+        OFEchoReply reply = (OFEchoReply)factory.getMessage(OFType.ECHO_REPLY);
+        reply.setXid(request.getXid());
+
+        return reply;
     }
 
-    public ChannelFuture sendEchoReply(OFEchoRequest in) {
-        OFEchoReply out = (OFEchoReply)factory.getMessage(OFType.ECHO_REPLY);
-        out.setXid(in.getXid());
-        log.info("Echo reply sent from {}", channel.getLocalAddress());
-        return channel.write(out);
-    }
-
-    public void setChannel(Channel channel) {
-        if (channel == null) {
-            throw new IllegalArgumentException();
-        }
-
-        this.channel = channel;
-    }
-
-    public boolean isReadyToStart() {
-        return readyToStart.get();
+    public OFMessage helloData() {
+        return factory.getMessage(OFType.HELLO);
     }
 
     public void receiveMessages() {
@@ -221,5 +140,9 @@ public class FakeSwitch {
 
     public int getSentPacketIns() {
         return sentPacketOuts.get();
+    }
+
+    public void sendingPacketInCompleted() {
+        sentPacketOuts.incrementAndGet();
     }
 }
