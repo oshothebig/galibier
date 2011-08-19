@@ -40,15 +40,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeSwitch {
-    private static final Logger log = LoggerFactory.getLogger(FakeSwitch.class);
-    private static final int connectionTimeOut = 500;
-
     private final int dataPathId;
 
     private final AtomicInteger nextTransactionId = new AtomicInteger(0);
     private final AtomicInteger receivedMessages = new AtomicInteger(0);
     private final AtomicInteger sentPacketOuts = new AtomicInteger(0);
-    private final AtomicBoolean readyToStart = new AtomicBoolean(false);
 
     private final OFMessageFactory factory = new BasicFactory();
 
@@ -144,5 +140,23 @@ public class FakeSwitch {
 
     public void sendingPacketInCompleted() {
         sentPacketOuts.incrementAndGet();
+    }
+
+    public OFMessage getConfigReplyData(OFGetConfigRequest request) {
+        OFGetConfigReply reply = (OFGetConfigReply)factory.getMessage(OFType.GET_CONFIG_REPLY);
+        reply.setXid(request.getXid());
+        reply.setMissSendLength((short)0xFFFF);
+        reply.setFlags((short)0);
+
+        return reply;
+    }
+
+    public OFMessage vendorReplyData(OFVendor request) {
+        OFError reply = (OFError)factory.getMessage(OFType.ERROR);
+        reply.setXid(request.getXid());
+        reply.setErrorType(OFError.OFErrorType.OFPET_BAD_REQUEST);
+        reply.setErrorCode(OFError.OFBadActionCode.OFPBAC_BAD_VENDOR);
+
+        return reply;
     }
 }

@@ -62,6 +62,13 @@ public class OpenFlowBenchmarkHandler extends SimpleChannelUpstreamHandler{
                 out = fakeSwitch.featureReplyData((OFFeaturesRequest)in);
                 ctx.getChannel().write(out);
                 break;
+            case GET_CONFIG_REQUEST:
+                out = fakeSwitch.getConfigReplyData((OFGetConfigRequest)in);
+                ctx.getChannel().write(out);
+                break;
+            case VENDOR:
+                out = fakeSwitch.vendorReplyData((OFVendor)in);
+                ctx.getChannel().write(out);
             case PACKET_OUT:
             case FLOW_MOD:
                 long currentTime = System.nanoTime();

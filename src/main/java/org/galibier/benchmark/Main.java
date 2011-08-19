@@ -94,50 +94,19 @@ public class Main {
             System.exit(0);
         }
 
-        fakeSwitches = new ArrayList<FakeSwitch>(switches);
-        bootstraps = new ArrayList<ClientBootstrap>(switches);
-        previousSentMessages = new long[switches];
-        Arrays.fill(previousSentMessages, 0);
-        previousReceivedMessages = new long[switches];
-        Arrays.fill(previousReceivedMessages, 0);
-
         initialize();
 
         long connectionStartTime = System.nanoTime();
-
-        List<ChannelFuture> futures = new ArrayList<ChannelFuture>(switches);
-        for (ClientBootstrap bootstrap: bootstraps) {
-            futures.add(bootstrap.connect(new InetSocketAddress(host, port)));
-        }
-
-        for (ChannelFuture f: futures) {
-            f.awaitUninterruptibly();
-            if (!f.isSuccess()) {
-                f.getCause().printStackTrace();
-                System.exit(0);
-            }
-
-            channels.add(f.getChannel());
-        }
+        connect();
         long connectionEndTime = System.nanoTime();
         long connectionCompletionTime = connectionEndTime - connectionStartTime;
         double acceptanceRate = (double)switches / (double)connectionCompletionTime * 1.0e9;
         System.out.println(String.format("Acceptance rate :%.5f connections/sec", acceptanceRate));
 
         long benchmarkStartTime = System.nanoTime();
-        for (Channel channel: channels) {
-            OpenFlowBenchmarkHandler handler = (OpenFlowBenchmarkHandler)channel.getPipeline().getLast();
-            handler.start(benchmarkStartTime, duration * loops);
-        }
+        start(benchmarkStartTime);
 
-        for (int i = 0; i < loops; i++) {
-            try {
-                Thread.sleep(duration);
-                outputReport();
-            } catch (InterruptedException e) {
-                //  ignore
-            }
-        }
+        reportPeriodically();
 
         close();
 
@@ -146,6 +115,42 @@ public class Main {
         long totalMessages = totalReceivedMessages();
         double throughput = (double)totalMessages / (double)benchmarkDuration * 1.0e9;
         System.out.println(String.format("Overall throughput: %.5f requests/sec", throughput));
+    }
+
+    private void reportPeriodically() {
+        for (int i = 0; i < loops; i++) {
+            try {
+                Thread.sleep(duration);
+                outputReport();
+            } catch (InterruptedException e) {
+                //  ignore
+            }
+        }
+    }
+
+    private void start(long benchmarkStartTime) {
+        for (Channel channel: channels) {
+            OpenFlowBenchmarkHandler handler = (OpenFlowBenchmarkHandler)channel.getPipeline().getLast();
+            handler.start(benchmarkStartTime, duration * loops);
+        }
+    }
+
+    private void connect() {
+        List<ChannelFuture> futures = new ArrayList<ChannelFuture>(switches);
+        for (ClientBootstrap bootstrap: bootstraps) {
+            futures.add(bootstrap.connect(new InetSocketAddress(host, port)));
+        }
+
+        for (ChannelFuture f: futures) {
+            f.awaitUninterruptibly();
+            if (!f.isSuccess()) {
+                System.err.println("Connection failed: " + f.getCause());
+                System.err.println("Abort");
+                System.exit(0);
+            }
+
+            channels.add(f.getChannel());
+        }
     }
 
     private void close() {
@@ -157,8 +162,16 @@ public class Main {
     }
 
     private void initialize() {
+        fakeSwitches = new ArrayList<FakeSwitch>(switches);
+        bootstraps = new ArrayList<ClientBootstrap>(switches);
+        previousSentMessages = new long[switches];
+        Arrays.fill(previousSentMessages, 0);
+        previousReceivedMessages = new long[switches];
+        Arrays.fill(previousReceivedMessages, 0);
+
         for (int i = 0; i < switches; i++) {
-            final FakeSwitch fakeSwitch = new FakeSwitch(i, messageLength);
+            //  Datapath ID must be non-zero for NOX
+            final FakeSwitch fakeSwitch = new FakeSwitch(i + 1, messageLength);
             fakeSwitches.add(fakeSwitch);
 
             ClientBootstrap bootstrap = new ClientBootstrap(factory);
