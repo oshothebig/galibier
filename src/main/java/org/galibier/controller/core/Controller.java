@@ -32,8 +32,6 @@ import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.execution.ExecutionHandler;
-import org.jboss.netty.handler.execution.MemoryAwareThreadPoolExecutor;
 import org.openflow.protocol.OFMessage;
 import org.openflow.protocol.OFType;
 import org.slf4j.Logger;
