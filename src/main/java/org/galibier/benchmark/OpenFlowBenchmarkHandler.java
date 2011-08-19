@@ -31,8 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class OpenFlowBenchmarkHandler extends SimpleChannelUpstreamHandler{
-    private static final Logger log = LoggerFactory.getLogger(OpenFlowBenchmarkHandler.class);
-
     private FakeSwitch fakeSwitch;
     private volatile long benchmarkEndTime;
     private Channel channel;
