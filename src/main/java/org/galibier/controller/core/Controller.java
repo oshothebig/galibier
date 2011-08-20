@@ -25,9 +25,11 @@
 
 package org.galibier.controller.core;
 
+import com.sun.org.apache.bcel.internal.classfile.Constant;
 import org.galibier.controller.event.MessageListener;
 import org.galibier.controller.event.SwitchListener;
 import org.galibier.netty.OpenFlowServerPipelineFactory;
+import org.galibier.openflow.Constants;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
@@ -45,7 +47,6 @@ import java.util.concurrent.*;
 
 public class Controller {
     private static final Logger log = LoggerFactory.getLogger(Controller.class);
-    private static int DEFAULT_PORT = 6633;
 
     private final int portNumber;
     private ChannelFactory factory;
@@ -56,11 +57,11 @@ public class Controller {
             new CopyOnWriteArraySet<SwitchListener>();
 
     public Controller() {
-        this(DEFAULT_PORT);
+        this(Constants.CONTROLLER_DEFAULT_PORT);
     }
 
     public int getDefaultPortNumber() {
-        return DEFAULT_PORT;
+        return Constants.CONTROLLER_DEFAULT_PORT;
     }
 
     public Controller(int portNumber) {

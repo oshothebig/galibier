@@ -29,4 +29,6 @@ public class Constants {
     public static final int MAXIMUM_PACKET_LENGTH = 65535;
     public static final int LENGTH_FIELD_OFFSET = 2;
     public static final int LENGTH_FIELD_LENGTH = 2;
+
+    public static final int CONTROLLER_DEFAULT_PORT = 6633;
 }
