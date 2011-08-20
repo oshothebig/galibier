@@ -30,13 +30,17 @@ import org.openflow.protocol.OFFeaturesReply;
 import org.openflow.protocol.OFMessage;
 
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Switch {
     private OFFeaturesReply features;
-    private Date connectedSince;
-    private Channel channel;
+    private final Date connectedSince;
+    private final Channel channel;
+    private final Controller controller;
+    private final AtomicInteger transactionId = new AtomicInteger(0);
 
-    public Switch(Channel channel) {
+    public Switch(Controller controller, Channel channel) {
+        this.controller = controller;
         this.channel = channel;
         this.connectedSince = new Date();
     }

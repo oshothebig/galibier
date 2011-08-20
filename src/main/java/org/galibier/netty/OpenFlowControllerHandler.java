@@ -139,7 +139,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     @Override
     public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
         log.info("Connected from {}", ctx.getChannel().getRemoteAddress());
-        client = new Switch(ctx.getChannel());
+        client = new Switch(controller, ctx.getChannel());
         e.getChannel().write(factory.getMessage(OFType.HELLO));
         //  TODO: start sending echo request periodically
     }
