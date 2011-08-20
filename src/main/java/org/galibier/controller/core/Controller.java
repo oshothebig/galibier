@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -49,7 +50,7 @@ public class Controller {
     private final int portNumber;
     private ChannelFactory factory;
     private Channel channel;
-    private ConcurrentMap<OFType, List<MessageListener>> messageListeners =
+    private Map<OFType, List<MessageListener>> messageListeners =
             new ConcurrentHashMap<OFType, List<MessageListener>>();
     private Set<SwitchListener> switchListeners =
             new CopyOnWriteArraySet<SwitchListener>();
@@ -83,18 +84,14 @@ public class Controller {
     }
 
     public synchronized void addMessageListener(OFType type, MessageListener listener) {
-        List<MessageListener> initialListeners = new CopyOnWriteArrayList<MessageListener>();
-        initialListeners.add(listener);
-        List<MessageListener> oldListener = messageListeners.putIfAbsent(type, initialListeners);
+        List<MessageListener> listeners;
         if (messageListeners.containsKey(type)) {
-            List<MessageListener> oldListeners = messageListeners.get(type);
-            oldListeners.add(listener);
-            messageListeners.put(type, oldListeners);
+            listeners = messageListeners.get(type);
         } else {
-            List<MessageListener> newListeners = new CopyOnWriteArrayList<MessageListener>();
-            newListeners.add(listener);
-            messageListeners.put(type, newListeners);
+            listeners = new CopyOnWriteArrayList<MessageListener>();
         }
+        listeners.add(listener);
+        messageListeners.put(type, listeners);
     }
 
     public synchronized void removeMessageListener(OFType type, MessageListener listener) {
