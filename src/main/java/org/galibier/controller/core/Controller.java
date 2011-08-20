@@ -25,7 +25,6 @@
 
 package org.galibier.controller.core;
 
-import com.sun.org.apache.bcel.internal.classfile.Constant;
 import org.galibier.controller.event.MessageListener;
 import org.galibier.controller.event.SwitchListener;
 import org.galibier.netty.OpenFlowServerPipelineFactory;
@@ -43,7 +42,10 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.Executors;
 
 public class Controller {
     private static final Logger log = LoggerFactory.getLogger(Controller.class);
@@ -53,7 +55,7 @@ public class Controller {
     private Channel channel;
     private Map<OFType, List<MessageListener>> messageListeners =
             new ConcurrentHashMap<OFType, List<MessageListener>>();
-    private Set<SwitchListener> switchListeners =
+    private Set<SwitchListener> switchListeners = 
             new CopyOnWriteArraySet<SwitchListener>();
 
     public Controller() {
