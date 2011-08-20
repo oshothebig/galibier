@@ -50,36 +50,83 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
         OFMessage response;
         switch (request.getType()) {
             case HELLO:
-                log.info("HELLO received from {}", ctx.getChannel().getRemoteAddress());
-                response = factory.getMessage(OFType.FEATURES_REQUEST);
-                e.getChannel().write(response);
-                log.info("FEATURE REQUEST sent to {}", ctx.getChannel().getRemoteAddress());
+                handleHello(ctx, (OFHello)request);
                 break;
             case FEATURES_REPLY:
-                log.info("FEATURE REPLY received from {}", ctx.getChannel().getRemoteAddress());
-                client.setFeatures((OFFeaturesReply) request);
-                controller.addSwitch(client);
-                return;
+                handleFeaturesReply(ctx, (OFFeaturesReply)request);
+                break;
             case ECHO_REQUEST:
-                response = factory.getMessage(OFType.ECHO_REPLY);
-                response.setXid(request.getXid());
-                e.getChannel().write(response);
-                log.info("ECHO REPLY sent to {}", ctx.getChannel().getRemoteAddress());
+                handleEchoRequest(ctx, (OFEchoRequest)request);
+                break;
+            case ECHO_REPLY:
+                handleEchoReply(ctx, (OFEchoReply)request);
                 break;
             case ERROR:
-                OFError error = (OFError) request;
-                logError(client, error);
+                handleError(ctx, (OFError)request);
                 return;
+            case PACKET_IN:
+                handlePacketIn(ctx, (OFPacketIn)request);
+                break;
+            case PACKET_OUT:
+                handlePacketOut(ctx, (OFPacketOut)request);
+                break;
             default:
                 controller.invokeMessageListener(client, request);
                 return;
         }
     }
-    
-    private void logError(Switch client, OFError error) {
+
+    //  Method for handling OpenFlow protocol
+    //  Symmetric message
+    private void handleHello(ChannelHandlerContext ctx, OFHello in) {
+        log.info("HELLO received from {}", ctx.getChannel().getRemoteAddress());
+
+        OFFeaturesRequest out = (OFFeaturesRequest)factory.getMessage(OFType.FEATURES_REQUEST);
+        log.info("FEATURES REQUEST sent tot {}", ctx.getChannel().getRemoteAddress());
+        ctx.getChannel().write(out);
+    }
+
+    private void handleError(ChannelHandlerContext ctx, OFError error) {
         //  TODO: implement more solid codes
         log.info("OpenFlow error occurred, error type: {}, error code: {}, ",
                 error.getErrorType(), error.getErrorCode());
+    }
+
+    private void handleEchoRequest(ChannelHandlerContext ctx, OFEchoRequest in) {
+        log.debug("ECHO REQUEST received from {}", ctx.getChannel().getRemoteAddress());
+
+        OFEchoReply out = (OFEchoReply)factory.getMessage(OFType.ECHO_REPLY);
+        out.setXid(in.getXid());
+        ctx.getChannel().write(out);
+        log.debug("ECHO REPLY sent to {}", ctx.getChannel().getRemoteAddress());
+    }
+
+    private void handleEchoReply(ChannelHandlerContext ctx, OFEchoReply in) {
+        //  ignore
+    }
+
+    private void handleVendor(ChannelHandlerContext ctx, OFVendor in) {
+        
+    }
+
+    //  Controller/switch message
+    private void handleFeaturesRequest(ChannelHandlerContext ctx, OFFeaturesRequest in) {
+        //  ignore
+    }
+
+    private void handleFeaturesReply(ChannelHandlerContext ctx, OFFeaturesReply in) {
+        log.info("FEATURE REPLY received from {}", ctx.getChannel().getRemoteAddress());
+        client.setFeatures((OFFeaturesReply) in);
+        controller.addSwitch(client);
+    }
+
+    //  Asynchronous message
+    private void handlePacketIn(ChannelHandlerContext ctx, OFPacketIn in) {
+        controller.invokeMessageListener(client, in);
+    }
+
+    private void handlePacketOut(ChannelHandlerContext ctx, OFPacketOut in) {
+        
     }
 
     @Override
@@ -94,6 +141,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
         log.info("Connected from {}", ctx.getChannel().getRemoteAddress());
         client = new Switch(ctx.getChannel());
         e.getChannel().write(factory.getMessage(OFType.HELLO));
+        //  TODO: start sending echo request periodically
     }
 
     @Override
