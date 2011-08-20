@@ -91,7 +91,7 @@ public class Main {
         if (help) {
             System.err.println("java Main [option] host");
             parser.printUsage(System.err);
-            System.exit(0);
+            System.exit(1);
         }
 
         initialize();
@@ -146,7 +146,7 @@ public class Main {
             if (!f.isSuccess()) {
                 System.err.println("Connection failed: " + f.getCause());
                 System.err.println("Abort");
-                System.exit(0);
+                System.exit(1);
             }
 
             channels.add(f.getChannel());
