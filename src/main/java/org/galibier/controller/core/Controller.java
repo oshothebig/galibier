@@ -96,7 +96,11 @@ public class Controller {
 
     public synchronized void removeMessageListener(OFType type, MessageListener listener) {
         List<MessageListener> oldListeners = messageListeners.get(type);
-        oldListeners.remove(listener);
+        if (oldListeners.size() > 0) {
+            oldListeners.remove(listener);
+        } else {
+            messageListeners.remove(type);
+        }
     }
 
     public void addSwitch(Switch client) {
