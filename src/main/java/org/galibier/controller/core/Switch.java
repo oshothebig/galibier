@@ -25,6 +25,7 @@
 
 package org.galibier.controller.core;
 
+import com.google.common.base.Objects;
 import org.jboss.netty.channel.Channel;
 import org.openflow.protocol.OFFeaturesReply;
 import org.openflow.protocol.OFMessage;
@@ -59,21 +60,16 @@ public class Switch {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
         if (o instanceof Switch) {
-            Switch other = (Switch) o;
-            return this.dataPathId() == other.dataPathId();
+            Switch other = (Switch)o;
+            return Objects.equal(this.dataPathId(), other.dataPathId());
         }
-
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Long.valueOf(dataPathId()).hashCode();
+        return Objects.hashCode(dataPathId());
     }
 
     public void receive(OFMessage message) {
