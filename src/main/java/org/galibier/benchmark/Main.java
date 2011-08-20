@@ -213,7 +213,7 @@ public class Main {
             FakeSwitch fs = fakeSwitches.get(i);
             long currentSentMessages = fs.getSentPacketIns();
             long currentReceivedMessages = fs.getReceivedMessages();
-            long sentMessageDifference = currentSentMessages - previousReceivedMessages[i];
+            long sentMessageDifference = currentSentMessages - previousSentMessages[i];
             long receivedMessageDifference = currentReceivedMessages - previousReceivedMessages[i];
             totalReceivedMessage += receivedMessageDifference;
             previousSentMessages[i] = currentSentMessages;
