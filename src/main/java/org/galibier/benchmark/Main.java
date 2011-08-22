@@ -72,7 +72,6 @@ public class Main {
 
     private List<FakeSwitch> fakeSwitches;
     private List<ClientBootstrap> bootstraps;
-    private long[] previousSentMessages;
     private long[] previousReceivedMessages;
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ChannelFactory factory = new NioClientSocketChannelFactory(executor, executor);
@@ -164,8 +163,6 @@ public class Main {
     private void initialize() {
         fakeSwitches = new ArrayList<FakeSwitch>(switches);
         bootstraps = new ArrayList<ClientBootstrap>(switches);
-        previousSentMessages = new long[switches];
-        Arrays.fill(previousSentMessages, 0);
         previousReceivedMessages = new long[switches];
         Arrays.fill(previousReceivedMessages, 0);
 
@@ -211,28 +208,16 @@ public class Main {
         long totalReceivedMessage = 0;
         for (int i = 0; i < switches; i++) {
             FakeSwitch fs = fakeSwitches.get(i);
-            long currentSentMessages = fs.getSentPacketIns();
             long currentReceivedMessages = fs.getReceivedMessages();
-            long sentMessageDifference = currentSentMessages - previousSentMessages[i];
             long receivedMessageDifference = currentReceivedMessages - previousReceivedMessages[i];
             totalReceivedMessage += receivedMessageDifference;
-            previousSentMessages[i] = currentSentMessages;
             previousReceivedMessages[i] = currentReceivedMessages;
 
-            System.out.print(String.format("%d/%d  ", receivedMessageDifference, sentMessageDifference));
+            System.out.print(String.format("%d  ", receivedMessageDifference));
         }
 
         System.out.println();
         System.out.println("Total: " + totalReceivedMessage);
-    }
-
-    private long totalSentPacketIns() {
-        long total = 0;
-        for (FakeSwitch sw: fakeSwitches) {
-            total += sw.getSentPacketIns();
-        }
-
-        return total;
     }
 
     public static void main(String[] args) {
