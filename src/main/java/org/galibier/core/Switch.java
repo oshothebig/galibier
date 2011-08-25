@@ -26,6 +26,7 @@
 package org.galibier.core;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import org.jboss.netty.channel.Channel;
 import org.openflow.protocol.OFFeaturesReply;
 import org.openflow.protocol.OFMessage;
@@ -42,6 +43,8 @@ public class Switch {
     private final Channel channel;
 
     public Switch(Channel channel) {
+        Preconditions.checkNotNull(channel);
+
         this.channel = channel;
         this.connectedSince = new Date();
     }
@@ -63,6 +66,8 @@ public class Switch {
     }
 
     public void sendMessage(OFMessage out) {
+        Preconditions.checkNotNull(out);
+
         channel.write(out);
     }
 

@@ -34,14 +34,14 @@ import org.openflow.protocol.factory.OFMessageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     private static final Logger log = LoggerFactory.getLogger(OpenFlowControllerHandler.class);
     private static final OFMessageFactory factory = new BasicFactory();
+    private static final long ECHO_REQUEST_INTERVAL = 5000; // milli sec
+    private static final long FEATURES_REQUEST_INTERVAL = 5000; //  milli sec
 
     private final ScheduledExecutorService timer;
 
@@ -52,6 +52,8 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     private final AtomicInteger nextTransactionId = new AtomicInteger(0);
     private final ConcurrentMap<Integer, OFMessage> pendingOperations =
             new ConcurrentHashMap<Integer, OFMessage>();
+    private ScheduledFuture<?> featuresRequestTask;
+    private ScheduledFuture<?> echoRequestTask;
 
     public OpenFlowControllerHandler(Controller controller, ScheduledExecutorService timer) {
         this.controller = controller;
@@ -84,6 +86,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     public void handleMessage(OFMessage in) {
+        log.debug("{} received from {}", in.getType(), channel.getRemoteAddress());
         switch(in.getType()) {
             case HELLO:
                 handleHello((OFHello)in);
@@ -149,7 +152,6 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void handleHello(OFHello in) {
-        log.info("HELLO received from {}", channel.getRemoteAddress());
         sendFeaturesRequest();
     }
 
@@ -160,12 +162,12 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void handleEchoRequest(OFEchoRequest in) {
-        log.debug("ECHO REQUEST received from {}", channel.getRemoteAddress());
         sendEchoReply(in.getXid());
     }
 
     private void handleEchoReply(OFEchoReply in) {
-        log.debug("ECHO REPLY received from {}", channel.getRemoteAddress());
+        //  TODO
+        //  disconnect when continuous ECHO_REPLY can not be received
     }
 
     private void handleVendor(OFVendor in) {
@@ -177,7 +179,6 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void handleFeaturesReply(OFFeaturesReply in) {
-        log.info("FEATURE REPLY received from {}", channel.getRemoteAddress());
         client.setFeatures(in);
 
         controller.switchHandshaked(client);
@@ -188,7 +189,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void handleGetConfigReply(OFGetConfigReply in) {
-        //To change body of created methods use File | Settings | File Templates.
+        stopSendFeaturesRequestPeriodically();
     }
 
     private void handleSetConfig(OFSetConfig in) {
@@ -239,17 +240,51 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
         log.warn("Unsupported message ({}) received from {}", in.getType(), channel.getRemoteAddress());
     }
 
-    public void switchConnected(Channel channel) {
-        log.info("Connected from {}", this.channel.getRemoteAddress());
+    private void switchConnected(Channel channel) {
+        log.info("Connected from {}", channel.getRemoteAddress());
         this.channel = channel;
         this.client = new Switch(channel);
 
         sendHello();
-        //  TODO: start sending echo request periodically
+
+        //  sending echo request periodically
+        echoRequestTask = timer.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                sendMessage(factory.getMessage(OFType.ECHO_REQUEST));
+            }
+        }, ECHO_REQUEST_INTERVAL, ECHO_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
+
+        //  sending FEATURES REQUEST periodically until FEATURES REPLY is received
+        featuresRequestTask = timer.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                if (client.isHandshaked()) {
+                    OFSetConfig config = (OFSetConfig) factory.getMessage(OFType.SET_CONFIG);
+                    config.setMissSendLength((short)0xffff).setLengthU(OFSetConfig.MINIMUM_LENGTH);
+                    sendMessage(config);
+                    sendMessage(factory.getMessage(OFType.GET_CONFIG_REQUEST));
+                } else {
+                    sendMessage(factory.getMessage(OFType.FEATURES_REQUEST));
+                }
+            }
+        }, FEATURES_REQUEST_INTERVAL, FEATURES_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
-    public void switchDisconnected() {
+    private void stopSendFeaturesRequestPeriodically() {
+        if (featuresRequestTask != null) {
+            featuresRequestTask.cancel(false);
+        }
+    }
+
+    private void stopSendEchoRequestPeriodically() {
+        if (echoRequestTask != null) {
+            echoRequestTask.cancel(false);
+        }
+    }
+
+    private void switchDisconnected() {
         log.info("Disconnected from {}", channel.getRemoteAddress());
+        stopSendEchoRequestPeriodically();
+        stopSendFeaturesRequestPeriodically();
 
         //  tell the parent that the connection to a switch is released
         controller.switchDisconnected(client);
@@ -264,27 +299,30 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     public void sendMessage(OFMessage out) {
-        out.setXid(nextTransactionId.incrementAndGet());
-        channel.write(out);
+        if (channel != null && channel.isConnected()) {
+            out.setXid(nextTransactionId.incrementAndGet());
+            channel.write(out);
+            log.debug("{} sent to {}", out.getType(), channel.getRemoteAddress());
+        }
     }
 
-    public void sendHello() {
+    private void sendHello() {
         OFMessage hello = factory.getMessage(OFType.HELLO);
         sendMessage(hello);
-        log.info("HELLO sent to {}", channel.getRemoteAddress());
+        log.info("{} sent to {}", hello.getType(), channel.getRemoteAddress());
     }
 
-    public void sendFeaturesRequest() {
-        OFFeaturesRequest request = (OFFeaturesRequest)factory.getMessage(OFType.FEATURES_REQUEST);
+    private void sendFeaturesRequest() {
+        OFMessage request = factory.getMessage(OFType.FEATURES_REQUEST);
         sendMessage(request);
-        log.info("FEATURES REQUEST sent to {}", channel.getRemoteAddress());
+        log.info("{} sent to {}", request.getType(), channel.getRemoteAddress());
     }
 
     private void sendEchoReply(int xid) {
         OFEchoReply reply = (OFEchoReply)factory.getMessage(OFType.ECHO_REPLY);
         reply.setXid(xid);
         channel.write(reply);
-        log.debug("ECHO REPLY sent to {}", channel.getRemoteAddress());
+        log.debug("{} sent to {}", reply.getType(), channel.getRemoteAddress());
     }
 
 }

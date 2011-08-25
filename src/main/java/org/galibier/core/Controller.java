@@ -25,6 +25,7 @@
 
 package org.galibier.core;
 
+import com.google.common.base.Preconditions;
 import org.galibier.netty.OpenFlowServerPipelineFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -110,16 +111,23 @@ public class Controller {
     }
 
     public void addEventListener(EventListener listener) {
+        Preconditions.checkNotNull(listener);
+
         eventListeners.addIfAbsent(listener);
     }
 
     public void removeEventListener(EventListener listener) {
+        Preconditions.checkNotNull(listener);
+
         eventListeners.remove(listener);
     }
 
     //  TODO: Do callback or Future have to be supported to notify when the reply is received?
     //  Some kinds of messages do not introduce the reply.
     public void sendMessage(Switch sw, OFMessage msg) {
+        Preconditions.checkNotNull(sw);
+        Preconditions.checkNotNull(msg);
+
         long datapathId = sw.dataPathId();
         //  TODO: have to write codes to send packets
     }
