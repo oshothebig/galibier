@@ -49,7 +49,7 @@ public class OpenFlowServerPipelineFactory implements ChannelPipelineFactory {
 
         //  add the binary codec combination first
         pipeline.addLast("framer", new LengthFieldBasedFrameDecoder(
-                MAXIMUM_PACKET_LENGTH, LENGTH_FIELD_OFFSET, LENGTH_FIELD_LENGTH, -4, 0));
+                MAXIMUM_PACKET_LENGTH, LENGTH_FIELD_OFFSET, LENGTH_FIELD_LENGTH, LENGTH_FIELD_MODIFICATION, 0));
         pipeline.addLast("decoder", new OpenFlowDecoder());
         pipeline.addLast("encoder", new OpenFlowEncoder());
 
