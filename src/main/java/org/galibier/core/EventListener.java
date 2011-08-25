@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.galibier.controller.event;
+package org.galibier.core;
 
 import org.galibier.core.Switch;
 import org.openflow.protocol.OFFlowRemoved;

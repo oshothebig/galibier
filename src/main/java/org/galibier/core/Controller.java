@@ -25,7 +25,6 @@
 
 package org.galibier.core;
 
-import org.galibier.controller.event.EventListener;
 import org.galibier.netty.OpenFlowServerPipelineFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
