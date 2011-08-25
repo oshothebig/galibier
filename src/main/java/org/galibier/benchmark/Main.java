@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.galibier.openflow.Constants.*;
+import static org.galibier.core.Constants.*;
 
 public class Main {
     @Option(name = "-s", aliases = "--switch", usage = "Number of switches")

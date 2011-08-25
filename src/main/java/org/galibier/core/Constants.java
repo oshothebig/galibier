@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.galibier.openflow;
+package org.galibier.core;
 
 public class Constants {
     public static final int MAXIMUM_PACKET_LENGTH = 65535;

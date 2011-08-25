@@ -25,10 +25,10 @@
 
 package org.galibier.example;
 
+import org.galibier.core.Constants;
 import org.galibier.core.Controller;
 import org.galibier.core.EventListener;
 import org.galibier.core.Switch;
-import org.galibier.openflow.Constants;
 import org.openflow.protocol.*;
 import org.openflow.protocol.action.OFAction;
 import org.openflow.protocol.action.OFActionOutput;

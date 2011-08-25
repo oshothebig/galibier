@@ -33,7 +33,7 @@ import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.galibier.openflow.Constants.*;
+import static org.galibier.core.Constants.*;
 
 public class OpenFlowServerPipelineFactory implements ChannelPipelineFactory {
     private final Controller controller;
