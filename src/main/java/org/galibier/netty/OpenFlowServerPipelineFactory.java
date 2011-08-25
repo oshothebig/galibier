@@ -31,13 +31,17 @@ import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 import static org.galibier.openflow.Constants.*;
 
 public class OpenFlowServerPipelineFactory implements ChannelPipelineFactory {
     private final Controller controller;
+    private final ScheduledExecutorService timer;
 
-    public OpenFlowServerPipelineFactory(Controller controller) {
+    public OpenFlowServerPipelineFactory(Controller controller, ScheduledExecutorService timer) {
         this.controller = controller;
+        this.timer = timer;
     }
 
     public ChannelPipeline getPipeline() throws Exception {
@@ -50,7 +54,7 @@ public class OpenFlowServerPipelineFactory implements ChannelPipelineFactory {
         pipeline.addLast("encoder", new OpenFlowEncoder());
 
         //  add then the business logic
-        pipeline.addLast("handler", new OpenFlowControllerHandler(controller));
+        pipeline.addLast("handler", new OpenFlowControllerHandler(controller, timer));
 
         return pipeline;
     }

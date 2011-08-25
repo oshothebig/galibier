@@ -25,18 +25,12 @@
 
 package org.galibier.benchmark;
 
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.openflow.protocol.*;
 import org.openflow.protocol.factory.BasicFactory;
 import org.openflow.protocol.factory.OFMessageFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeSwitch {

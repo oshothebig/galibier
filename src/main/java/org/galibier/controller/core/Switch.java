@@ -29,19 +29,19 @@ import com.google.common.base.Objects;
 import org.jboss.netty.channel.Channel;
 import org.openflow.protocol.OFFeaturesReply;
 import org.openflow.protocol.OFMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Switch {
+    private final static Logger log = LoggerFactory.getLogger(Switch.class);
+
     private OFFeaturesReply features;
     private final Date connectedSince;
     private final Channel channel;
-    private final Controller controller;
-    private final AtomicInteger transactionId = new AtomicInteger(0);
 
-    public Switch(Controller controller, Channel channel) {
-        this.controller = controller;
+    public Switch(Channel channel) {
         this.channel = channel;
         this.connectedSince = new Date();
     }
@@ -54,8 +54,16 @@ public class Switch {
         this.features = features;
     }
 
-    public long dataPathId() {
+    public synchronized long dataPathId() {
         return features.getDatapathId();
+    }
+
+    public boolean isHandshaked() {
+        return features != null;
+    }
+
+    public void sendMessage(OFMessage out) {
+        channel.write(out);
     }
 
     @Override
@@ -70,9 +78,5 @@ public class Switch {
     @Override
     public int hashCode() {
         return Objects.hashCode(dataPathId());
-    }
-
-    public void receive(OFMessage message) {
-        channel.write(message);
     }
 }

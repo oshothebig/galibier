@@ -25,108 +25,105 @@
 
 package org.galibier.controller.core;
 
-import org.galibier.controller.event.MessageListener;
-import org.galibier.controller.event.SwitchListener;
+import org.galibier.controller.event.EventListener;
 import org.galibier.netty.OpenFlowServerPipelineFactory;
-import org.galibier.openflow.Constants;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.openflow.protocol.OFFlowRemoved;
 import org.openflow.protocol.OFMessage;
-import org.openflow.protocol.OFType;
+import org.openflow.protocol.OFPacketIn;
+import org.openflow.protocol.OFPortStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class Controller {
     private static final Logger log = LoggerFactory.getLogger(Controller.class);
+    private static final int DEFAULT_SWITCHES = 64;
 
-    private final int portNumber;
-    private ChannelFactory factory;
     private Channel channel;
-    private Map<OFType, List<MessageListener>> messageListeners =
-            new ConcurrentHashMap<OFType, List<MessageListener>>();
-    private Set<SwitchListener> switchListeners = 
-            new CopyOnWriteArraySet<SwitchListener>();
+    private ChannelFactory factory;
+    private ServerBootstrap bootstrap;
 
-    public Controller() {
-        this(Constants.CONTROLLER_DEFAULT_PORT);
-    }
+    private final ConcurrentMap<Long, Switch> handshakedSwitches =
+            new ConcurrentHashMap<Long, Switch>(DEFAULT_SWITCHES);
 
-    public int getDefaultPortNumber() {
-        return Constants.CONTROLLER_DEFAULT_PORT;
-    }
+    private final CopyOnWriteArrayList<EventListener> eventListeners =
+            new CopyOnWriteArrayList<EventListener>();
 
-    public Controller(int portNumber) {
-        this.portNumber = portNumber;
-    }
-
-    public void bind() {
+    public void start(int port) {
         factory = new NioServerSocketChannelFactory(
                 Executors.newCachedThreadPool(),
                 Executors.newCachedThreadPool());
-        ServerBootstrap bootstrap = new ServerBootstrap(factory);
+        bootstrap = new ServerBootstrap(factory);
 
-        bootstrap.setPipelineFactory(new OpenFlowServerPipelineFactory(this));
+        ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
+        bootstrap.setPipelineFactory(new OpenFlowServerPipelineFactory(this, timer));
         bootstrap.setOption("reuseAddress", true);
 
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
 
-        channel = bootstrap.bind(new InetSocketAddress(this.portNumber));
+        channel = bootstrap.bind(new InetSocketAddress(port));
         log.info("Controller started: {}", channel.getLocalAddress());
     }
 
-    public synchronized void addMessageListener(OFType type, MessageListener listener) {
-        List<MessageListener> listeners;
-        if (messageListeners.containsKey(type)) {
-            listeners = messageListeners.get(type);
-        } else {
-            listeners = new CopyOnWriteArrayList<MessageListener>();
-        }
-        listeners.add(listener);
-        messageListeners.put(type, listeners);
-    }
+    public void switchHandshaked(Switch sw) {
+        handshakedSwitches.put(sw.dataPathId(), sw);
 
-    public synchronized void removeMessageListener(OFType type, MessageListener listener) {
-        List<MessageListener> oldListeners = messageListeners.get(type);
-        if (oldListeners.size() > 0) {
-            oldListeners.remove(listener);
-        } else {
-            messageListeners.remove(type);
+        //  TODO: is ordering of invocation of listeners needed ?
+        //  TODO: is concurrent invocation of listeners needed ?
+        for (EventListener listener: eventListeners) {
+            listener.switchConnected(sw);
         }
     }
 
-    public void addSwitch(Switch client) {
-        for (SwitchListener listener: switchListeners) {
-            listener.switchConnected(client);
+    public synchronized void switchDisconnected(Switch sw) {
+        handshakedSwitches.remove(sw.dataPathId());
+
+        //  TODO: is ordering of invocation of listeners needed ?
+        //  TODO: is concurrent invocation of listeners needed ?
+        for (EventListener listener: eventListeners) {
+            listener.switchDisconnected(sw);
         }
     }
 
-    public void removeSwitch(Switch client) {
-        for (SwitchListener listener: switchListeners) {
-            listener.switchDisconnected(client);
+    public void handlePacketIn(Switch sw, OFPacketIn in) {
+        for (EventListener listener: eventListeners) {
+            listener.handlePacketIn(sw, in);
         }
     }
 
-    public void invokeMessageListener(Switch client, OFMessage message) {
-        List<MessageListener> listeners = messageListeners.get(message.getType());
-        
-        if (listeners == null) {
-            return;
+    public void handleFlowRemoved(Switch sw, OFFlowRemoved in) {
+        for (EventListener listener: eventListeners) {
+            listener.handleFlowRemoved(sw, in);
         }
+    }
 
-        for (MessageListener listener: listeners) {
-            listener.receive(client, message);
+    public void handlePortStatus(Switch sw, OFPortStatus in) {
+        for (EventListener listener: eventListeners) {
+            listener.handlePortStatus(sw, in);
         }
+    }
+
+    public void addEventListener(EventListener listener) {
+        eventListeners.addIfAbsent(listener);
+    }
+
+    public void removeEventListener(EventListener listener) {
+        eventListeners.remove(listener);
+    }
+
+    //  TODO: Do callback or Future have to be supported to notify when the reply is received?
+    //  Some kinds of messages do not introduce the reply.
+    public void sendMessage(Switch sw, OFMessage msg) {
+        long datapathId = sw.dataPathId();
+        //  TODO: have to write codes to send packets
     }
 }

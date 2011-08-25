@@ -27,8 +27,6 @@ package org.galibier.benchmark;
 
 import org.jboss.netty.channel.*;
 import org.openflow.protocol.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class OpenFlowBenchmarkHandler extends SimpleChannelUpstreamHandler{
     private FakeSwitch fakeSwitch;

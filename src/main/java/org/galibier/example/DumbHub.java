@@ -27,7 +27,8 @@ package org.galibier.example;
 
 import org.galibier.controller.core.Controller;
 import org.galibier.controller.core.Switch;
-import org.galibier.controller.event.MessageListener;
+import org.galibier.controller.event.EventListener;
+import org.galibier.openflow.Constants;
 import org.openflow.protocol.*;
 import org.openflow.protocol.action.OFAction;
 import org.openflow.protocol.action.OFActionOutput;
@@ -38,42 +39,60 @@ import org.openflow.util.U16;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DumbHub implements MessageListener {
+public class DumbHub implements EventListener {
     private Controller controller;
-    private OFMessageFactory factory;
-
-    public Command receive(Switch client, OFMessage message) {
-        OFPacketIn packetIn = (OFPacketIn) message;
-        OFPacketOut out = (OFPacketOut) factory.getMessage(OFType.PACKET_OUT);
-        out.setBufferId(packetIn.getBufferId());
-        out.setInPort(packetIn.getInPort());
-
-        // set actions
-        OFActionOutput action = new OFActionOutput();
-        action.setMaxLength((short) 0);
-        action.setPort((short) OFPort.OFPP_FLOOD.getValue());
-        List<OFAction> actions = new ArrayList<OFAction>();
-        actions.add(action);
-        out.setActions(actions);
-        out.setActionsLength((short) OFActionOutput.MINIMUM_LENGTH);
-        out.setLength(U16.t(OFPacketOut.MINIMUM_LENGTH + out.getActionsLength()));
-        client.receive(out);
-
-        return Command.CONTINUE;
-    }
+    private final OFMessageFactory factory = new BasicFactory();
 
     public DumbHub() {
-        controller = new Controller();
-        factory = new BasicFactory();
-        controller.addMessageListener(OFType.PACKET_IN, this);
+        this.controller = new Controller();
     }
 
-    public void start() {
-        controller.bind();
+    public void start(int port) {
+        controller.addEventListener(this);
+        controller.start(port);
     }
 
     public static void main(String[] args) {
         DumbHub hub = new DumbHub();
-        hub.start();
+        hub.start(Constants.CONTROLLER_DEFAULT_PORT);
+    }
+
+    public void switchConnected(Switch sw) {
+        //  ignore
+    }
+
+    public void switchDisconnected(Switch sw) {
+        //  ignore
+    }
+
+    public void handlePacketIn(Switch sw, OFPacketIn msg) {
+        //  to behave a dumb hub
+        //  all incoming packets are flooded
+        OFPacketOut out = (OFPacketOut)factory.getMessage(OFType.PACKET_OUT);
+        out.setBufferId(msg.getBufferId());
+        out.setInPort(msg.getInPort());
+
+        //  set actions
+        OFActionOutput action= new OFActionOutput();
+        action.setMaxLength((short) 0);
+        action.setPort((short)OFPort.OFPP_FLOOD.getValue());
+        List<OFAction> actions = new ArrayList<OFAction>();
+        actions.add(action);
+        out.setActions(actions);
+        out.setActionsLength((short)OFActionOutput.MINIMUM_LENGTH);
+        out.setLength(U16.t(OFPacketOut.MINIMUM_LENGTH + out.getActionsLength()));
+
+        //  send the PACKET OUT
+        //  TODO: have to implement to send a packet
+        sw.sendMessage(out);
+        //  controller.sendMessage(sw, out);
+    }
+
+    public void handleFlowRemoved(Switch sw, OFFlowRemoved msg) {
+        //  ignore
+    }
+
+    public void handlePortStatus(Switch sw, OFPortStatus msg) {
+        //  ignore
     }
 }
