@@ -42,8 +42,7 @@ public class OpenFlowEncoder extends OneToOneEncoder {
             ByteBuffer buffer = ByteBuffer.allocate(response.getLength());
             response.writeTo(buffer);
             buffer.flip();
-            ChannelBuffer cbuf = ChannelBuffers.wrappedBuffer(buffer);
-            return cbuf;
+            return ChannelBuffers.wrappedBuffer(buffer);
         }
 
         return ChannelBuffers.EMPTY_BUFFER;
