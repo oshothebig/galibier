@@ -25,8 +25,8 @@
 
 package org.galibier.netty;
 
-import org.galibier.controller.core.Controller;
-import org.galibier.controller.core.Switch;
+import org.galibier.core.Controller;
+import org.galibier.core.Switch;
 import org.jboss.netty.channel.*;
 import org.openflow.protocol.*;
 import org.openflow.protocol.factory.BasicFactory;

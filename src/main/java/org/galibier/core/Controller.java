@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.galibier.controller.core;
+package org.galibier.core;
 
 import org.galibier.controller.event.EventListener;
 import org.galibier.netty.OpenFlowServerPipelineFactory;
@@ -39,8 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.*;
 
 public class Controller {

@@ -25,7 +25,7 @@
 
 package org.galibier.netty;
 
-import org.galibier.controller.core.Controller;
+import org.galibier.core.Controller;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;

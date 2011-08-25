@@ -25,8 +25,8 @@
 
 package org.galibier.example;
 
-import org.galibier.controller.core.Controller;
-import org.galibier.controller.core.Switch;
+import org.galibier.core.Controller;
+import org.galibier.core.Switch;
 import org.galibier.controller.event.EventListener;
 import org.galibier.openflow.Constants;
 import org.openflow.protocol.*;

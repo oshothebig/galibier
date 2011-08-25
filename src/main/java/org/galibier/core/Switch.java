@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.galibier.controller.core;
+package org.galibier.core;
 
 import com.google.common.base.Objects;
 import org.jboss.netty.channel.Channel;
