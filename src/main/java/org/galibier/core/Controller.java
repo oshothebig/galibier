@@ -54,6 +54,8 @@ public class Controller {
 
     private final CopyOnWriteArrayList<EventListener> eventListeners =
             new CopyOnWriteArrayList<EventListener>();
+    private final ScheduledExecutorService timer =
+            Executors.newSingleThreadScheduledExecutor();
 
     public void start(int port) {
         factory = new NioServerSocketChannelFactory(
@@ -61,7 +63,6 @@ public class Controller {
                 Executors.newCachedThreadPool());
         bootstrap = new ServerBootstrap(factory);
 
-        ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
         bootstrap.setPipelineFactory(new OpenFlowServerPipelineFactory(this, timer));
         bootstrap.setOption("reuseAddress", true);
 
@@ -70,6 +71,14 @@ public class Controller {
 
         channel = bootstrap.bind(new InetSocketAddress(port));
         log.info("Controller started: {}", channel.getLocalAddress());
+    }
+
+    public void stop() {
+        for (Switch sw: handshakedSwitches.values()) {
+            sw.stop();
+        }
+        timer.shutdown();
+        factory.releaseExternalResources();
     }
 
     public void switchHandshaked(Switch sw) {

@@ -27,6 +27,7 @@ package org.galibier.core;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import org.galibier.benchmark.OpenFlowBenchmarkHandler;
 import org.jboss.netty.channel.Channel;
 import org.openflow.protocol.OFFeaturesReply;
 import org.openflow.protocol.OFMessage;
@@ -69,6 +70,11 @@ public class Switch {
         Preconditions.checkNotNull(out);
 
         channel.write(out);
+    }
+
+    public void stop() {
+        //  stop scheduled tasks
+        channel.getCloseFuture().awaitUninterruptibly();
     }
 
     @Override
