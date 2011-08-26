@@ -25,7 +25,6 @@
 
 package org.galibier.core;
 
-import org.galibier.core.Switch;
 import org.openflow.protocol.OFFlowRemoved;
 import org.openflow.protocol.OFPacketIn;
 import org.openflow.protocol.OFPortStatus;
