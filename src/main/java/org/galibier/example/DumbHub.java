@@ -75,7 +75,7 @@ public class DumbHub implements EventListener {
         //  set actions
         OFActionOutput action= new OFActionOutput();
         action.setMaxLength((short) 0);
-        action.setPort((short)OFPort.OFPP_FLOOD.getValue());
+        action.setPort(OFPort.OFPP_FLOOD.getValue());
         List<OFAction> actions = new ArrayList<OFAction>();
         actions.add(action);
         out.setActions(actions);
