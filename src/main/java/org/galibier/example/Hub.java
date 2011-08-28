@@ -39,11 +39,11 @@ import org.openflow.util.U16;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DumbHub implements EventListener {
+public class Hub implements EventListener {
     private Controller controller;
     private final OFMessageFactory factory = new BasicFactory();
 
-    public DumbHub() {
+    public Hub() {
         this.controller = new Controller();
     }
 
@@ -53,7 +53,7 @@ public class DumbHub implements EventListener {
     }
 
     public static void main(String[] args) {
-        DumbHub hub = new DumbHub();
+        Hub hub = new Hub();
         hub.start(Constants.CONTROLLER_DEFAULT_PORT);
     }
 
