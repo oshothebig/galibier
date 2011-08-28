@@ -61,7 +61,7 @@ public class Switch {
         return features.getDatapathId();
     }
 
-    public boolean isHandshaked() {
+    public boolean isHandshaken() {
         return features != null;
     }
 

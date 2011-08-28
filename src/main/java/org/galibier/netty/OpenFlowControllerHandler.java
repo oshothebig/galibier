@@ -257,7 +257,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
         //  sending FEATURES REQUEST periodically until FEATURES REPLY is received
         featuresRequestTask = timer.scheduleAtFixedRate(new Runnable() {
             public void run() {
-                if (client.isHandshaked()) {
+                if (client.isHandshaken()) {
                     OFSetConfig config = (OFSetConfig) factory.getMessage(OFType.SET_CONFIG);
                     config.setMissSendLength((short)0xffff).setLengthU(OFSetConfig.MINIMUM_LENGTH);
                     sendMessage(config);
