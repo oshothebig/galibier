@@ -40,12 +40,12 @@ public class Switch {
 
     private OFFeaturesReply features;
     private final Date connectedSince;
-    private final Channel channel;
+    private final MessageDispatcher dispatcher;
 
-    public Switch(Channel channel) {
-        Preconditions.checkNotNull(channel);
+    public Switch(MessageDispatcher dispatcher) {
+        Preconditions.checkNotNull(dispatcher);
 
-        this.channel = channel;
+        this.dispatcher = dispatcher;
         this.connectedSince = new Date();
     }
 
@@ -65,15 +65,14 @@ public class Switch {
         return features != null;
     }
 
-    public void sendMessage(OFMessage out) {
+    public void send(OFMessage out) {
         Preconditions.checkNotNull(out);
 
-        channel.write(out);
+        dispatcher.send(out);
     }
 
     public void stop() {
-        //  stop scheduled tasks
-        channel.getCloseFuture().awaitUninterruptibly();
+        dispatcher.stop();
     }
 
     @Override

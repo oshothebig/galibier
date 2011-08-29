@@ -26,6 +26,8 @@
 package org.galibier.netty;
 
 import org.galibier.core.Controller;
+import org.galibier.core.MessageDispatcher;
+import org.galibier.core.Operation;
 import org.galibier.core.Switch;
 import org.jboss.netty.channel.*;
 import org.openflow.protocol.*;
@@ -37,7 +39,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
+import static org.galibier.core.Constants.*;
+
+public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler implements MessageDispatcher {
     private static final Logger log = LoggerFactory.getLogger(OpenFlowControllerHandler.class);
     private static final OFMessageFactory factory = new BasicFactory();
     private static final long ECHO_REQUEST_INTERVAL = 5000; // milli sec
@@ -50,8 +54,8 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     private Channel channel;
 
     private final AtomicInteger nextTransactionId = new AtomicInteger(0);
-    private final ConcurrentMap<Integer, OFMessage> pendingOperations =
-            new ConcurrentHashMap<Integer, OFMessage>();
+    private final ConcurrentMap<Integer, Operation> pendingOperations =
+            new ConcurrentHashMap<Integer, Operation>();
     private ScheduledFuture<?> featuresRequestTask;
     private ScheduledFuture<?> echoRequestTask;
 
@@ -179,6 +183,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void handleFeaturesReply(OFFeaturesReply in) {
+        //  
         client.setFeatures(in);
 
         controller.switchHandshaked(client);
@@ -189,6 +194,9 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void handleGetConfigReply(OFGetConfigReply in) {
+        //  TODO
+        //  if this GET_CONFIG_REPLY is corresponds to the startSendFeatureRequestPeriodically,
+        //  stop the task.
         stopSendFeaturesRequestPeriodically();
     }
 
@@ -243,14 +251,14 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
     private void switchConnected(Channel channel) {
         log.info("Connected from {}", channel.getRemoteAddress());
         this.channel = channel;
-        this.client = new Switch(channel);
+        this.client = new Switch(this);
 
         sendHello();
 
         //  sending echo request periodically
         echoRequestTask = timer.scheduleAtFixedRate(new Runnable() {
             public void run() {
-                sendMessage(factory.getMessage(OFType.ECHO_REQUEST));
+                send(factory.getMessage(OFType.ECHO_REQUEST));
             }
         }, ECHO_REQUEST_INTERVAL, ECHO_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
 
@@ -260,10 +268,10 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
                 if (client.isHandshaken()) {
                     OFSetConfig config = (OFSetConfig) factory.getMessage(OFType.SET_CONFIG);
                     config.setMissSendLength((short)0xffff).setLengthU(OFSetConfig.MINIMUM_LENGTH);
-                    sendMessage(config);
-                    sendMessage(factory.getMessage(OFType.GET_CONFIG_REQUEST));
+                    send(config);
+                    send(factory.getMessage(OFType.GET_CONFIG_REQUEST));
                 } else {
-                    sendMessage(factory.getMessage(OFType.FEATURES_REQUEST));
+                    send(factory.getMessage(OFType.FEATURES_REQUEST));
                 }
             }
         }, FEATURES_REQUEST_INTERVAL, FEATURES_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
@@ -298,23 +306,50 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler {
         });
     }
 
-    public void sendMessage(OFMessage out) {
+    public void send(OFMessage out) {
         if (channel != null && channel.isConnected()) {
             out.setXid(nextTransactionId.incrementAndGet());
-            channel.write(out);
+
+            ChannelFuture future = channel.write(out);
+            if (REQUEST_TYPE.contains(out.getType())) {
+                final Operation op = new Operation(out);
+                pendingOperations.putIfAbsent(out.getXid(), op);
+                future.addListener(new ChannelFutureListener() {
+                    public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                        op.sentCompleted();
+                    }
+                });
+            }
             log.debug("{} sent to {}", out.getType(), channel.getRemoteAddress());
         }
     }
 
+    public void stop() {
+        stopSendEchoRequestPeriodically();
+        stopSendFeaturesRequestPeriodically();
+        channel.getCloseFuture().awaitUninterruptibly();
+    }
+
+    private Operation terminateRequest(OFMessage reply) {
+        int xid = reply.getXid();
+        Operation op = pendingOperations.remove(xid);
+        if (op != null) {
+            //  tell that the operation is completed
+        } else {
+            //  already removed from the map
+        }
+        return op;
+    }
+
     private void sendHello() {
         OFMessage hello = factory.getMessage(OFType.HELLO);
-        sendMessage(hello);
+        send(hello);
         log.info("{} sent to {}", hello.getType(), channel.getRemoteAddress());
     }
 
     private void sendFeaturesRequest() {
         OFMessage request = factory.getMessage(OFType.FEATURES_REQUEST);
-        sendMessage(request);
+        send(request);
         log.info("{} sent to {}", request.getType(), channel.getRemoteAddress());
     }
 

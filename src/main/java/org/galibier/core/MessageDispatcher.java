@@ -25,30 +25,9 @@
 
 package org.galibier.core;
 
-import org.openflow.protocol.OFType;
+import org.openflow.protocol.OFMessage;
 
-import java.util.EnumSet;
-
-public class Constants {
-    public static final int MAXIMUM_PACKET_LENGTH = 65535;
-    public static final int LENGTH_FIELD_OFFSET = 2;
-    public static final int LENGTH_FIELD_LENGTH = 2;
-    public static final int LENGTH_FIELD_MODIFICATION = -4;
-
-    public static final int CONTROLLER_DEFAULT_PORT = 6633;
-
-    public static final EnumSet<OFType> REQUEST_TYPE =
-            EnumSet.of(
-                    OFType.FEATURES_REQUEST,
-                    OFType.GET_CONFIG_REQUEST,
-                    OFType.STATS_REQUEST,
-                    OFType.BARRIER_REQUEST
-            );
-    public static final EnumSet<OFType> REPLY_TYPE =
-            EnumSet.of(
-                    OFType.FEATURES_REPLY,
-                    OFType.GET_CONFIG_REPLY,
-                    OFType.STATS_REPLY,
-                    OFType.BARRIER_REPLY
-            );
+public interface MessageDispatcher {
+    public void send(OFMessage msg);
+    public void stop();
 }

@@ -84,8 +84,8 @@ public class Hub implements EventListener {
 
         //  send the PACKET OUT
         //  TODO: have to implement to send a packet
-        sw.sendMessage(out);
-        //  controller.sendMessage(sw, out);
+        sw.send(out);
+        //  controller.send(sw, out);
     }
 
     public void handleFlowRemoved(Switch sw, OFFlowRemoved msg) {
