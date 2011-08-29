@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.galibier.core.Constants.*;
 
@@ -43,6 +44,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     private static final OFMessageFactory factory = new BasicFactory();
     private static final long ECHO_REQUEST_INTERVAL = 5000; // milli sec
     private static final long FEATURES_REQUEST_INTERVAL = 5000; //  milli sec
+    private static final long ECHO_REQUEST_TIMEOUT = 10000;
 
     private final ScheduledExecutorService timer;
 
@@ -50,11 +52,14 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     private Switch client;
     private Channel channel;
 
+    private final AtomicLong lastEchoRequestedTimeMillis = new AtomicLong();
+
     private final AtomicInteger nextTransactionId = new AtomicInteger(0);
     private final ConcurrentMap<Integer, OFMessageFuture> pendingOperations =
             new ConcurrentHashMap<Integer, OFMessageFuture>();
     private ScheduledFuture<?> featuresRequestTask;
     private ScheduledFuture<?> echoRequestTask;
+    private ScheduledFuture<?> echoReplyCheckTask;
 
     public OpenFlowControllerHandler(Controller controller, ScheduledExecutorService timer) {
         this.controller = controller;
@@ -168,7 +173,6 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
 
     private void handleEchoReply(OFEchoReply in) {
         terminateRequest(in);
-        //  disconnect when continuous ECHO_REPLY can not be received
     }
 
     private void handleVendor(OFVendor in) {
@@ -254,13 +258,28 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
 
         //  sending echo request periodically
         echoRequestTask = timer.scheduleAtFixedRate(new Runnable() {
+            @Override
             public void run() {
                 send(factory.getMessage(OFType.ECHO_REQUEST));
+                lastEchoRequestedTimeMillis.set(System.currentTimeMillis());
             }
         }, ECHO_REQUEST_INTERVAL, ECHO_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
 
+        //
+        echoReplyCheckTask = timer.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                long current = System.currentTimeMillis();
+                if (current - lastEchoRequestedTimeMillis.get() > ECHO_REQUEST_TIMEOUT) {
+                    log.warn("Disconnect due to echo reply timeout");
+                    stop();
+                }
+            }
+        }, ECHO_REQUEST_TIMEOUT, ECHO_REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
+
         //  sending FEATURES REQUEST periodically until FEATURES REPLY is received
         featuresRequestTask = timer.scheduleAtFixedRate(new Runnable() {
+            @Override
             public void run() {
                 if (client.isHandshaken()) {
                     OFSetConfig config = (OFSetConfig) factory.getMessage(OFType.SET_CONFIG);
@@ -283,6 +302,12 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     private void stopSendEchoRequestPeriodically() {
         if (echoRequestTask != null) {
             echoRequestTask.cancel(false);
+        }
+    }
+
+    private void stopHeartbeatTask() {
+        if (echoReplyCheckTask != null) {
+            echoReplyCheckTask.cancel(false);
         }
     }
 
@@ -322,6 +347,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     public void stop() {
         stopSendEchoRequestPeriodically();
         stopSendFeaturesRequestPeriodically();
+        stopHeartbeatTask();
         channel.getCloseFuture().awaitUninterruptibly();
     }
 
