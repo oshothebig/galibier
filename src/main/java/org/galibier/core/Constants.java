@@ -30,6 +30,9 @@ import org.openflow.protocol.OFType;
 import java.util.EnumSet;
 
 public class Constants {
+    //  preventing to create a instance
+    private Constants() {}
+
     public static final int MAXIMUM_PACKET_LENGTH = 65535;
     public static final int LENGTH_FIELD_OFFSET = 2;
     public static final int LENGTH_FIELD_LENGTH = 2;
