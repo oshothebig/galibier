@@ -172,7 +172,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleVendor(OFVendor in) {
-        //  TODO: have to implement
+        controller.handleVendorExtension(client, in);
     }
 
     private void handleFeaturesRequest(OFFeaturesRequest in) {

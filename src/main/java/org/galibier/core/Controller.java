@@ -31,10 +31,7 @@ import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.openflow.protocol.OFFlowRemoved;
-import org.openflow.protocol.OFMessage;
-import org.openflow.protocol.OFPacketIn;
-import org.openflow.protocol.OFPortStatus;
+import org.openflow.protocol.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +51,8 @@ public class Controller {
 
     private final CopyOnWriteArrayList<EventListener> eventListeners =
             new CopyOnWriteArrayList<EventListener>();
+    private final CopyOnWriteArrayList<VendorListener> vendorListeners =
+            new CopyOnWriteArrayList<VendorListener>();
     private final ScheduledExecutorService timer =
             Executors.newSingleThreadScheduledExecutor();
 
@@ -119,6 +118,12 @@ public class Controller {
         }
     }
 
+    public void handleVendorExtension(Switch sw, OFVendor in) {
+        for (VendorListener listener: vendorListeners) {
+            listener.handleVendorExtension(sw, in);
+        }
+    }
+
     public void addEventListener(EventListener listener) {
         Preconditions.checkNotNull(listener);
 
@@ -126,6 +131,18 @@ public class Controller {
     }
 
     public void removeEventListener(EventListener listener) {
+        Preconditions.checkNotNull(listener);
+
+        eventListeners.remove(listener);
+    }
+
+    public void addVendorListener(VendorListener listener) {
+        Preconditions.checkNotNull(listener);
+
+        vendorListeners.addIfAbsent(listener);
+    }
+
+    public void removeVendorListener(VendorListener listener) {
         Preconditions.checkNotNull(listener);
 
         eventListeners.remove(listener);
