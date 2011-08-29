@@ -28,6 +28,6 @@ package org.galibier.core;
 import org.openflow.protocol.OFMessage;
 
 public interface MessageDispatcher {
-    public void send(OFMessage msg);
+    public OFMessageFuture send(OFMessage msg);
     public void stop();
 }

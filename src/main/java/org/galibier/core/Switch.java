@@ -65,10 +65,10 @@ public class Switch {
         return features != null;
     }
 
-    public void send(OFMessage out) {
+    public OFMessageFuture send(OFMessage out) {
         Preconditions.checkNotNull(out);
 
-        dispatcher.send(out);
+        return dispatcher.send(out);
     }
 
     public void stop() {

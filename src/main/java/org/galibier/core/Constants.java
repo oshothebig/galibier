@@ -39,6 +39,7 @@ public class Constants {
 
     public static final EnumSet<OFType> REQUEST_TYPE =
             EnumSet.of(
+                    OFType.ECHO_REQUEST,
                     OFType.FEATURES_REQUEST,
                     OFType.GET_CONFIG_REQUEST,
                     OFType.STATS_REQUEST,
@@ -46,6 +47,7 @@ public class Constants {
             );
     public static final EnumSet<OFType> REPLY_TYPE =
             EnumSet.of(
+                    OFType.ECHO_REPLY, 
                     OFType.FEATURES_REPLY,
                     OFType.GET_CONFIG_REPLY,
                     OFType.STATS_REPLY,

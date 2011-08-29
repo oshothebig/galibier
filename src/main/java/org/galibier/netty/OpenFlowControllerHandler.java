@@ -25,10 +25,7 @@
 
 package org.galibier.netty;
 
-import org.galibier.core.Controller;
-import org.galibier.core.MessageDispatcher;
-import org.galibier.core.Operation;
-import org.galibier.core.Switch;
+import org.galibier.core.*;
 import org.jboss.netty.channel.*;
 import org.openflow.protocol.*;
 import org.openflow.protocol.factory.BasicFactory;
@@ -54,8 +51,8 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     private Channel channel;
 
     private final AtomicInteger nextTransactionId = new AtomicInteger(0);
-    private final ConcurrentMap<Integer, Operation> pendingOperations =
-            new ConcurrentHashMap<Integer, Operation>();
+    private final ConcurrentMap<Integer, OFMessageFuture> pendingOperations =
+            new ConcurrentHashMap<Integer, OFMessageFuture>();
     private ScheduledFuture<?> featuresRequestTask;
     private ScheduledFuture<?> echoRequestTask;
 
@@ -170,7 +167,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleEchoReply(OFEchoReply in) {
-        //  TODO
+        terminateRequest(in);
         //  disconnect when continuous ECHO_REPLY can not be received
     }
 
@@ -183,7 +180,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleFeaturesReply(OFFeaturesReply in) {
-        //  
+        terminateRequest(in);
         client.setFeatures(in);
 
         controller.switchHandshaked(client);
@@ -194,7 +191,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleGetConfigReply(OFGetConfigReply in) {
-        //  TODO
+        terminateRequest(in);
         //  if this GET_CONFIG_REPLY is corresponds to the startSendFeatureRequestPeriodically,
         //  stop the task.
         stopSendFeaturesRequestPeriodically();
@@ -233,7 +230,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleStatisticsReply(OFStatisticsReply in) {
-        //To change body of created methods use File | Settings | File Templates.
+        terminateRequest(in);
     }
 
     private void handleBarrierRequest(OFBarrierRequest in) {
@@ -241,7 +238,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleBarrierReply(OFBarrierReply in) {
-        //To change body of created methods use File | Settings | File Templates.
+        terminateRequest(in);
     }
 
     private void handleUnsupportedMessage(OFMessage in) {
@@ -306,21 +303,19 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         });
     }
 
-    public void send(OFMessage out) {
+    public OFMessageFuture send(OFMessage out) {
         if (channel != null && channel.isConnected()) {
             out.setXid(nextTransactionId.incrementAndGet());
 
             ChannelFuture future = channel.write(out);
+            OFMessageFuture messageFuture = new OFMessageFuture(out, future);
             if (REQUEST_TYPE.contains(out.getType())) {
-                final Operation op = new Operation(out);
-                pendingOperations.putIfAbsent(out.getXid(), op);
-                future.addListener(new ChannelFutureListener() {
-                    public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                        op.sentCompleted();
-                    }
-                });
+                pendingOperations.putIfAbsent(out.getXid(), messageFuture);
             }
             log.debug("{} sent to {}", out.getType(), channel.getRemoteAddress());
+            return messageFuture;
+        } else {
+            return new OFMessageFuture(out, null);
         }
     }
 
@@ -330,15 +325,17 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         channel.getCloseFuture().awaitUninterruptibly();
     }
 
-    private Operation terminateRequest(OFMessage reply) {
+    private void terminateRequest(OFMessage reply) {
         int xid = reply.getXid();
-        Operation op = pendingOperations.remove(xid);
-        if (op != null) {
+        OFMessageFuture future = pendingOperations.remove(xid);
+        if (future != null) {
             //  tell that the operation is completed
+            future.setReply(reply);
         } else {
             //  already removed from the map
+            log.warn("The request corresponding to {} (Xid={}) was already processed",
+                    reply.getType(), reply.getXid());
         }
-        return op;
     }
 
     private void sendHello() {
