@@ -57,14 +57,17 @@ public class Hub implements EventListener {
         hub.start(Constants.CONTROLLER_DEFAULT_PORT);
     }
 
+    @Override
     public void switchConnected(Switch sw) {
         //  ignore
     }
 
+    @Override
     public void switchDisconnected(Switch sw) {
         //  ignore
     }
 
+    @Override
     public void handlePacketIn(Switch sw, OFPacketIn msg) {
         //  to behave a dumb hub
         //  all incoming packets are flooded
@@ -88,10 +91,12 @@ public class Hub implements EventListener {
         //  controller.send(sw, out);
     }
 
+    @Override
     public void handleFlowRemoved(Switch sw, OFFlowRemoved msg) {
         //  ignore
     }
 
+    @Override
     public void handlePortStatus(Switch sw, OFPortStatus msg) {
         //  ignore
     }
