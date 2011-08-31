@@ -81,10 +81,6 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
 
     @Override
     public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-        stopSendFeaturesRequestPeriodically();
-        stopSendEchoRequestPeriodically();
-        stopHeartbeatCheckTask();
-
         switchDisconnected();
     }
 
@@ -322,6 +318,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         log.info("Disconnected from {}", channel.getRemoteAddress());
         stopSendEchoRequestPeriodically();
         stopSendFeaturesRequestPeriodically();
+        stopHeartbeatCheckTask();
 
         //  tell the parent that the connection to a switch is released
         controller.switchDisconnected(client);
