@@ -38,6 +38,8 @@ public class OFMessageFuture {
     private final AtomicReference<OFMessage> reply = new AtomicReference<OFMessage>();
 
     public OFMessageFuture(OFMessage message, ChannelFuture requestFuture) {
+        Preconditions.checkNotNull(message);
+
         this.message = message;
         this.requestFuture = requestFuture;
     }

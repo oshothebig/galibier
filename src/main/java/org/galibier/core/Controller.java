@@ -145,12 +145,12 @@ public class Controller {
     public void removeVendorListener(VendorListener listener) {
         Preconditions.checkNotNull(listener);
 
-        eventListeners.remove(listener);
+        vendorListeners.remove(listener);
     }
 
     //  TODO: Do callback or Future have to be supported to notify when the reply is received?
     //  Some kinds of messages do not introduce the reply.
-    public void sendMessage(Switch sw, OFMessage msg) {
+    public void send(Switch sw, OFMessage msg) {
         Preconditions.checkNotNull(sw);
         Preconditions.checkNotNull(msg);
 
