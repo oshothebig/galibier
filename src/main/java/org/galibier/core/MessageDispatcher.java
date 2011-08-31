@@ -28,6 +28,15 @@ package org.galibier.core;
 import org.openflow.protocol.OFMessage;
 
 public interface MessageDispatcher {
+    /**
+     * MessageDispatcher sends the OFMessage to the corresponding switch
+     * @param msg The message sent to the corresponding switch
+     * @return Future of the message
+     */
     public OFMessageFuture send(OFMessage msg);
+
+    /**
+     * Tell the MessageDispatcher to stop
+     */
     public void stop();
 }
