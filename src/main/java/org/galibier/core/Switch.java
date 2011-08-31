@@ -27,7 +27,6 @@ package org.galibier.core;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import org.jboss.netty.channel.Channel;
 import org.openflow.protocol.OFFeaturesReply;
 import org.openflow.protocol.OFMessage;
 import org.slf4j.Logger;
