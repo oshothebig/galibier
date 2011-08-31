@@ -42,7 +42,6 @@ public class Controller {
     private static final Logger log = LoggerFactory.getLogger(Controller.class);
     private static final int DEFAULT_SWITCHES = 64;
 
-    private Channel channel;
     private ChannelFactory factory;
     private ServerBootstrap bootstrap;
 
@@ -68,7 +67,7 @@ public class Controller {
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
 
-        channel = bootstrap.bind(new InetSocketAddress(port));
+        Channel channel = bootstrap.bind(new InetSocketAddress(port));
         log.info("Controller started: {}", channel.getLocalAddress());
     }
 
