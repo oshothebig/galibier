@@ -156,5 +156,11 @@ public class Controller {
 
         long datapathId = sw.dataPathId();
         //  TODO: have to write codes to send packets
+        Switch lookup = handshakedSwitches.get(datapathId);
+        if (lookup == null) {
+            log.warn("Switch (DPID={}) is already disconnected from the controller", sw.dataPathId());
+        } else {
+            lookup.send(msg);
+        }
     }
 }

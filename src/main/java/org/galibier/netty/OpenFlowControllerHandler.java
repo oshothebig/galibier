@@ -196,9 +196,12 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
 
     private void handleGetConfigReply(OFGetConfigReply in) {
         terminateRequest(in);
+
         //  if this GET_CONFIG_REPLY is corresponds to the startSendFeatureRequestPeriodically,
         //  stop the task.
-        stopSendFeaturesRequestPeriodically();
+        if (!featuresRequestTask.isCancelled()) {
+            stopSendFeaturesRequestPeriodically();
+        }
     }
 
     private void handleSetConfig(OFSetConfig in) {
@@ -351,7 +354,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         channel.getCloseFuture().awaitUninterruptibly();
     }
 
-    private void terminateRequest(OFMessage reply) {
+    private boolean terminateRequest(OFMessage reply) {
         int xid = reply.getXid();
         OFMessageFuture future = pendingOperations.remove(xid);
         if (future != null) {
@@ -362,6 +365,8 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
             log.warn("The request corresponding to {} (Xid={}) was already processed",
                     reply.getType(), reply.getXid());
         }
+
+        return future != null;
     }
 
     private void sendHello() {
