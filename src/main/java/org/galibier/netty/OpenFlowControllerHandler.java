@@ -59,7 +59,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
             new ConcurrentHashMap<Integer, OFMessageFuture>();
     private ScheduledFuture<?> featuresRequestTask;
     private ScheduledFuture<?> echoRequestTask;
-    private ScheduledFuture<?> echoReplyCheckTask;
+    private ScheduledFuture<?> heartbeatCheckTask;
 
     public OpenFlowControllerHandler(Controller controller, ScheduledExecutorService timer) {
         this.controller = controller;
@@ -81,6 +81,10 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
 
     @Override
     public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+        stopSendFeaturesRequestPeriodically();
+        stopSendEchoRequestPeriodically();
+        stopHeartbeatCheckTask();
+
         switchDisconnected();
     }
 
@@ -269,7 +273,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         }, ECHO_REQUEST_INTERVAL, ECHO_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
 
         //
-        echoReplyCheckTask = timer.scheduleAtFixedRate(new Runnable() {
+        heartbeatCheckTask = timer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 long current = System.currentTimeMillis();
@@ -308,9 +312,9 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         }
     }
 
-    private void stopHeartbeatTask() {
-        if (echoReplyCheckTask != null) {
-            echoReplyCheckTask.cancel(false);
+    private void stopHeartbeatCheckTask() {
+        if (heartbeatCheckTask != null) {
+            heartbeatCheckTask.cancel(false);
         }
     }
 
@@ -350,7 +354,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     public void stop() {
         stopSendEchoRequestPeriodically();
         stopSendFeaturesRequestPeriodically();
-        stopHeartbeatTask();
+        stopHeartbeatCheckTask();
         channel.getCloseFuture().awaitUninterruptibly();
     }
 
