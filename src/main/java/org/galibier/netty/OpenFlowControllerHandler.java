@@ -158,7 +158,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleHello(OFHello in) {
-        sendFeaturesRequest();
+        send(factory.getMessage(OFType.FEATURES_REQUEST));
     }
 
     private void handleError(OFError in) {
@@ -257,7 +257,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         this.channel = channel;
         this.client = new Switch(this);
 
-        sendHello();
+        send(factory.getMessage(OFType.HELLO));
 
         //  sending echo request periodically
         echoRequestTask = timer.scheduleAtFixedRate(new Runnable() {
@@ -367,18 +367,6 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         }
 
         return future != null;
-    }
-
-    private void sendHello() {
-        OFMessage hello = factory.getMessage(OFType.HELLO);
-        send(hello);
-        log.info("{} sent to {}", hello.getType(), channel.getRemoteAddress());
-    }
-
-    private void sendFeaturesRequest() {
-        OFMessage request = factory.getMessage(OFType.FEATURES_REQUEST);
-        send(request);
-        log.info("{} sent to {}", request.getType(), channel.getRemoteAddress());
     }
 
     private void sendEchoReply(int xid) {
