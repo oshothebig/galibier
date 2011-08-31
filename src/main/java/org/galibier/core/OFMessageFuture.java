@@ -29,7 +29,6 @@ import com.google.common.base.Preconditions;
 import org.jboss.netty.channel.ChannelFuture;
 import org.openflow.protocol.OFMessage;
 
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class OFMessageFuture {
