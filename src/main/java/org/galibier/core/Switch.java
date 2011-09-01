@@ -67,6 +67,9 @@ public class Switch {
     public OFMessageFuture send(OFMessage out) {
         Preconditions.checkNotNull(out);
 
+        if (features == null) {
+            log.warn("FEATURE_REPLY is not received, but a message will be sent");
+        }
         return dispatcher.send(out);
     }
 
