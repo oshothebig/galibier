@@ -92,7 +92,8 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     public void handleMessage(OFMessage in) {
-        log.debug("{} received from {}", in.getType(), channel.getRemoteAddress());
+        Object[] args = {in.getType(), in.getXid(), channel.getRemoteAddress()};
+        log.debug("{} (xid={}) received from {}", args);
         switch(in.getType()) {
             case HELLO:
                 handleHello((OFHello)in);
@@ -198,7 +199,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         terminateRequest(in);
 
         //  if this GET_CONFIG_REPLY is corresponds to the startSendFeatureRequestPeriodically,
-        //  stop the task.
+        //  stop the task
         if (!featuresRequestTask.isCancelled()) {
             stopSendFeaturesRequestPeriodically();
         }
@@ -268,7 +269,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
             }
         }, ECHO_REQUEST_INTERVAL, ECHO_REQUEST_INTERVAL, TimeUnit.MILLISECONDS);
 
-        //
+        //  start the heartbeat check scheduled task
         heartbeatCheckTask = timer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -341,7 +342,8 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
             if (REQUEST_TYPE.contains(out.getType())) {
                 pendingOperations.putIfAbsent(out.getXid(), messageFuture);
             }
-            log.debug("{} sent to {}", out.getType(), channel.getRemoteAddress());
+            Object[] args = {out.getType(), out.getXid(), channel.getRemoteAddress()};
+            log.debug("{} (xid={}) sent to {}", args);
             return messageFuture;
         } else {
             return new OFMessageFuture(out, null);
@@ -370,6 +372,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         return future != null;
     }
 
+    //  TODO: sendEchoReply has to be mixed with send() in the future
     private void sendEchoReply(int xid) {
         OFEchoReply reply = (OFEchoReply)factory.getMessage(OFType.ECHO_REPLY);
         reply.setXid(xid);
