@@ -92,7 +92,7 @@ public class Controller {
      * It is called internally when a switch is connected to the switch.
      * @param sw The switch connected to the switch
      */
-    public void switchHandshaked(Switch sw) {
+    public void switchHandshaken(Switch sw) {
         handshakedSwitches.put(sw.dataPathId(), sw);
 
         //  TODO: is ordering of invocation of listeners needed ?

@@ -190,7 +190,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         terminateRequest(in);
         client.setFeatures(in);
 
-        controller.switchHandshaked(client);
+        controller.switchHandshaken(client);
     }
 
     private void handleGetConfigRequest(OFGetConfigRequest in) {
