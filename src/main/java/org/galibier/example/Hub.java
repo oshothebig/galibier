@@ -34,10 +34,8 @@ import org.openflow.protocol.action.OFAction;
 import org.openflow.protocol.action.OFActionOutput;
 import org.openflow.protocol.factory.BasicFactory;
 import org.openflow.protocol.factory.OFMessageFactory;
-import org.openflow.util.U16;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 public class Hub implements EventListener {
     private Controller controller;
@@ -69,26 +67,26 @@ public class Hub implements EventListener {
 
     @Override
     public void handlePacketIn(Switch sw, OFPacketIn msg) {
-        //  to behave a dumb hub
-        //  all incoming packets are flooded
+        //  act as a repeater hub
         OFPacketOut out = (OFPacketOut)factory.getMessage(OFType.PACKET_OUT);
         out.setBufferId(msg.getBufferId());
         out.setInPort(msg.getInPort());
 
-        //  set actions
-        OFActionOutput action= new OFActionOutput();
-        action.setMaxLength((short) 0);
+        //  all incoming packets are flooded
+        OFActionOutput action = new OFActionOutput();
         action.setPort(OFPort.OFPP_FLOOD.getValue());
-        List<OFAction> actions = new ArrayList<OFAction>();
-        actions.add(action);
-        out.setActions(actions);
+        out.setActions(Collections.singletonList((OFAction) action));
         out.setActionsLength((short)OFActionOutput.MINIMUM_LENGTH);
-        out.setLength(U16.t(OFPacketOut.MINIMUM_LENGTH + out.getActionsLength()));
 
-        //  send the PACKET OUT
-        //  TODO: have to implement to send a packet
-        sw.send(out);
-        //  controller.send(sw, out);
+        //  packet data is set in the PACKET_OUT message when it is not buffered
+        if (msg.getBufferId() == 0xffffffff) {
+            byte[] packetData = msg.getPacketData();
+            out.setLength((short)(OFPacketOut.MINIMUM_LENGTH + out.getActionsLength() + packetData.length));
+            out.setPacketData(packetData);
+        //  packet data does not have to be set in the PACKET_OUT message when it is buffered at the switch
+        } else {
+            out.setLength((short)(OFPacketOut.MINIMUM_LENGTH + out.getActionsLength()));
+        }
     }
 
     @Override
