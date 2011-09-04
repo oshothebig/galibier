@@ -87,6 +87,8 @@ public class Hub implements EventListener {
         } else {
             out.setLength((short)(OFPacketOut.MINIMUM_LENGTH + out.getActionsLength()));
         }
+
+        sw.send(out);
     }
 
     @Override

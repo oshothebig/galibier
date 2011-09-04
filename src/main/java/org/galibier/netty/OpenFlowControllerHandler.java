@@ -169,7 +169,9 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleEchoRequest(OFEchoRequest in) {
-        sendEchoReply(in.getXid());
+        OFMessage out = factory.getMessage(OFType.ECHO_REPLY);
+        out.setXid(in.getXid());
+        send(out, false);
     }
 
     private void handleEchoReply(OFEchoReply in) {
@@ -333,10 +335,18 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         });
     }
 
-    public OFMessageFuture send(OFMessage out) {
-        if (channel != null && channel.isConnected()) {
+    /**
+     * Asynchronously sends a OpenFlow protocol message to the switch corresponding to this handler.
+     * @param out the OpenFlow protocol message to send to the switch
+     * @param autoXid true when XID of the message is automatically created, false when it is not changed
+     * @return the OFMessageFuture which will be notified if the message is a kind of request messages
+     */
+    private OFMessageFuture send(OFMessage out, boolean autoXid) {
+        if (autoXid) {
             out.setXid(nextTransactionId.incrementAndGet());
-
+        }
+        
+        if (channel != null && channel.isConnected()) {
             ChannelFuture future = channel.write(out);
             OFMessageFuture messageFuture = new OFMessageFuture(out, future);
             if (REQUEST_TYPE.contains(out.getType())) {
@@ -350,6 +360,14 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         }
     }
 
+    @Override
+    public OFMessageFuture send(OFMessage msg) {
+        return send(msg, true);
+    }
+
+    /**
+     * Stops the scheduled tasks associated with this handler and close the channel to the switch
+     */
     public void stop() {
         stopSendEchoRequestPeriodically();
         stopSendFeaturesRequestPeriodically();
@@ -371,13 +389,4 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
 
         return future != null;
     }
-
-    //  TODO: sendEchoReply has to be mixed with send() in the future
-    private void sendEchoReply(int xid) {
-        OFEchoReply reply = (OFEchoReply)factory.getMessage(OFType.ECHO_REPLY);
-        reply.setXid(xid);
-        channel.write(reply);
-        log.debug("{} sent to {}", reply.getType(), channel.getRemoteAddress());
-    }
-
 }
