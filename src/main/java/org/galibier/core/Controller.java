@@ -55,6 +55,10 @@ public class Controller {
     private final ScheduledExecutorService timer =
             Executors.newSingleThreadScheduledExecutor();
 
+    /**
+     * Starts the controller. The controller waits the connection from the switch on the port.
+     * @param port The port number on which the controller listens
+     */
     public void start(int port) {
         factory = new NioServerSocketChannelFactory(
                 Executors.newCachedThreadPool(),
@@ -71,6 +75,10 @@ public class Controller {
         log.info("Controller started: {}", channel.getLocalAddress());
     }
 
+    /**
+     * Stops the controller. All connections to the switches are closed and all threads
+     * related to the controller are released.
+     */
     public void stop() {
         for (Switch sw: handshakedSwitches.values()) {
             sw.stop();
@@ -79,6 +87,11 @@ public class Controller {
         factory.releaseExternalResources();
     }
 
+    /**
+     * For internal use. Invokes the event listeners for the event that a switch is connected.
+     * It is called internally when a switch is connected to the switch.
+     * @param sw The switch connected to the switch
+     */
     public void switchHandshaked(Switch sw) {
         handshakedSwitches.put(sw.dataPathId(), sw);
 
@@ -89,6 +102,11 @@ public class Controller {
         }
     }
 
+    /**
+     * For internal use. Invokes the event listeners for the event that a switch is disconnected.
+     * It is called internally when a switch is disconnected to the switch.
+     * @param sw The switch disconnected from the switch
+     */
     public synchronized void switchDisconnected(Switch sw) {
         handshakedSwitches.remove(sw.dataPathId());
 
@@ -99,48 +117,84 @@ public class Controller {
         }
     }
 
+    /**
+     * For internal use. Invokes the event listeners for the event that the controller receives a PACKET_IN message.
+     * @param sw The switch that sent the PACKET_IN message
+     * @param in The PACKET_IN message
+     */
     public void handlePacketIn(Switch sw, OFPacketIn in) {
         for (EventListener listener: eventListeners) {
             listener.handlePacketIn(sw, in);
         }
     }
 
+    /**
+     * For internal use. Invokes the event listeners for the event that the controller receives a FLOW_REMOVED message.
+     * @param sw The switch that sent the FLOW_REMOVED message
+     * @param in The FLOW_REMOVED message
+     */
     public void handleFlowRemoved(Switch sw, OFFlowRemoved in) {
         for (EventListener listener: eventListeners) {
             listener.handleFlowRemoved(sw, in);
         }
     }
 
+    /**
+     * For internal use. Invokes the event listener for the event that the controller receives a PORT_STATUS message.
+     * @param sw The switch that sent the PORT_STATUS message
+     * @param in The PORT_STATUS message
+     */
     public void handlePortStatus(Switch sw, OFPortStatus in) {
         for (EventListener listener: eventListeners) {
             listener.handlePortStatus(sw, in);
         }
     }
 
+    /**
+     * For internal use. Invokes the vendor listeners when the controller receives a VENDOR message.
+     * @param sw The switch that sent the VENDOR message
+     * @param in The VENDOR message
+     */
     public void handleVendorExtension(Switch sw, OFVendor in) {
         for (VendorListener listener: vendorListeners) {
             listener.handleVendorExtension(sw, in);
         }
     }
 
+    /**
+     * Registers the event listener to the controller.
+     * @param listener The event listener to be registered
+     */
     public void addEventListener(EventListener listener) {
         Preconditions.checkNotNull(listener);
 
         eventListeners.addIfAbsent(listener);
     }
 
+    /**
+     * Unregisters the event listener from the controller.
+     * @param listener The event listener to be unregisteed
+     */
     public void removeEventListener(EventListener listener) {
         Preconditions.checkNotNull(listener);
 
         eventListeners.remove(listener);
     }
 
+    /**
+     * Registers the vendor listener to the controller.
+     * @param listener The vendor listener to be registered
+     */
     public void addVendorListener(VendorListener listener) {
         Preconditions.checkNotNull(listener);
 
         vendorListeners.addIfAbsent(listener);
     }
 
+    /**
+     * Unregisters the vendor listener from the controller.
+     * @param listener The vendor listener to be unregistered
+     */
     public void removeVendorListener(VendorListener listener) {
         Preconditions.checkNotNull(listener);
 
