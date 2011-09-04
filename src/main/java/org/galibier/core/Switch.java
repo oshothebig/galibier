@@ -27,17 +27,31 @@ package org.galibier.core;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import org.galibier.util.EnumUtil;
 import org.openflow.protocol.OFFeaturesReply;
 import org.openflow.protocol.OFMessage;
+import org.openflow.protocol.OFPhysicalPort;
+import org.openflow.protocol.action.OFActionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import static org.openflow.protocol.OFFeaturesReply.OFCapabilities;
+import static org.openflow.protocol.OFPhysicalPort.OFPortConfig;
+import static org.openflow.protocol.OFPhysicalPort.OFPortState;
 
 public class Switch {
     private final static Logger log = LoggerFactory.getLogger(Switch.class);
 
-    private OFFeaturesReply features;
+    private volatile OFFeaturesReply features;
+    private final ConcurrentMap<Short, OFPhysicalPort> ports =
+            new ConcurrentHashMap<Short, OFPhysicalPort>();
     private final Date connectedSince;
     private final MessageDispatcher dispatcher;
 
@@ -54,10 +68,80 @@ public class Switch {
 
     public synchronized void setFeatures(OFFeaturesReply features) {
         this.features = features;
+
+        for (OFPhysicalPort port: features.getPorts()) {
+            ports.put(port.getPortNumber(), port);
+        }
     }
 
-    public synchronized long dataPathId() {
+    public long dataPathId() {
+        Preconditions.checkState(isHandshaken(), "Handshaking is not completed");
+
         return features.getDatapathId();
+    }
+
+    public int bufferCount() {
+        Preconditions.checkState(isHandshaken(), "Handshaking is not completed");
+
+        return features.getBuffers();
+    }
+
+    public byte tableCount() {
+        Preconditions.checkState(isHandshaken(), "Handshaking is not completed");
+
+        return features.getTables();
+    }
+
+    public EnumSet<OFCapabilities> capabilities() {
+        Preconditions.checkState(isHandshaken(), "Handshaking is not completed");
+
+        int bitCapabilities = features.getCapabilities();
+        return EnumUtil.parseCapabilities(bitCapabilities);
+    }
+
+    public EnumSet<OFActionType> supportedActions() {
+        Preconditions.checkState(isHandshaken());
+
+        int bitActions = features.getActions();
+        return EnumUtil.parseActions(bitActions);
+    }
+
+    public int portCount() {
+        return ports.keySet().size();
+    }
+
+    public int enabledPortCount() {
+        return getEnabledPorts().size();
+    }
+
+    public List<OFPhysicalPort> getEnabledPorts() {
+        List<OFPhysicalPort> result = new ArrayList<OFPhysicalPort>();
+        for (OFPhysicalPort port: ports.values()) {
+            if (portEnabled(port)) {
+                result.add(port);
+            }
+        }
+        return result;
+    }
+
+    private boolean portEnabled(short portNumber) {
+        return portEnabled(ports.get(portNumber));
+    }
+
+    private boolean portEnabled(OFPhysicalPort port) {
+        if (port == null) {
+            return false;
+        }
+        if ((port.getConfig() & OFPortConfig.OFPPC_PORT_DOWN.getValue()) > 0) {
+            return false;
+        }
+        if ((port.getState() & OFPortState.OFPPS_LINK_DOWN.getValue()) > 0) {
+            return false;
+        }
+        if ((port.getState() & OFPortState.OFPPS_STP_MASK.getValue()) == OFPortState.OFPPS_STP_BLOCK.getValue()) {
+            return false;
+        }
+        return true;
     }
 
     public boolean isHandshaken() {
