@@ -174,4 +174,16 @@ public class Switch {
     public int hashCode() {
         return Objects.hashCode(dataPathId());
     }
+
+    @Override
+    public String toString() {
+        String dpid = "NOT_HANDSHAKED";
+        if (features != null) {
+            dpid = String.format("%016x", dataPathId());
+        }
+        return Objects.toStringHelper(this)
+                .add("address", dispatcher.remoteAddress())
+                .add("dpid", dpid)
+                .toString();
+    }
 }

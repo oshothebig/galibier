@@ -33,6 +33,7 @@ import org.openflow.protocol.factory.OFMessageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -92,7 +93,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     public void handleMessage(OFMessage in) {
-        Object[] args = {in.getType(), in.getXid(), channel.getRemoteAddress()};
+        Object[] args = {in.getType(), in.getXid(), client};
         log.debug("{} (xid={}) received from {}", args);
         switch(in.getType()) {
             case HELLO:
@@ -252,13 +253,13 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void handleUnsupportedMessage(OFMessage in) {
-        log.warn("Unsupported message ({}) received from {}", in.getType(), channel.getRemoteAddress());
+        log.warn("Unsupported message ({}) received from {}", in.getType(), client);
     }
 
     private void switchConnected(Channel channel) {
-        log.info("Connected from {}", channel.getRemoteAddress());
         this.channel = channel;
         this.client = new Switch(this);
+        log.info("Connected from {}", client);
 
         send(factory.getMessage(OFType.HELLO));
 
@@ -318,7 +319,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
     }
 
     private void switchDisconnected() {
-        log.info("Disconnected from {}", channel.getRemoteAddress());
+        log.info("Disconnected from {}", client);
         stopSendEchoRequestPeriodically();
         stopSendFeaturesRequestPeriodically();
         stopHeartbeatCheckTask();
@@ -352,7 +353,7 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
             if (REQUEST_TYPE.contains(out.getType())) {
                 pendingOperations.putIfAbsent(out.getXid(), messageFuture);
             }
-            Object[] args = {out.getType(), out.getXid(), channel.getRemoteAddress()};
+            Object[] args = {out.getType(), out.getXid(), client};
             log.debug("{} (xid={}) sent to {}", args);
             return messageFuture;
         } else {
@@ -388,5 +389,19 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
         }
 
         return future != null;
+    }
+
+    @Override
+    public InetSocketAddress remoteAddress() {
+        //  TODO: check if cast below is safe or not.
+        //  current OpenFlow protocol does not support UDP/IP
+        return (InetSocketAddress)channel.getRemoteAddress();
+    }
+
+    @Override
+    public InetSocketAddress localAddress() {
+        //  TODO: check if cast below is safe or not.
+        //  current OpenFlow protocol does not support UDP/IP
+        return (InetSocketAddress)channel.getLocalAddress();
     }
 }
