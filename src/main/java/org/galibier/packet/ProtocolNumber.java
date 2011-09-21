@@ -25,7 +25,7 @@
 
 package org.galibier.packet;
 
-public enum IPProtocol {
+public enum ProtocolNumber {
     HOPOPT          (0),
     ICMP            (1),
     IGMP            (2),
@@ -173,7 +173,7 @@ public enum IPProtocol {
 
     private int value;
 
-    private IPProtocol(int value) {
+    private ProtocolNumber(int value) {
         this.value = value;
     }
 
