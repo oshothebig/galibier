@@ -25,34 +25,24 @@
 
 package org.galibier.packet;
 
-/**
- * Ethernet type assignment is listed in
- * http://www.iana.org/assignments/ethernet-numbers
- */
-public enum EthernetType {
-    IPv4        ((short)0x0800),
-    ARP         ((short)0x0806),
-    TAG_VLAN    ((short)0x8100),
-    RARP        ((short)0x8035),
-    IPv6        ((short)0x86DD),
-    MAC_IN_MAC  ((short)0x88A8),
-    LLDP        ((short)0x88CC),
-    Q_IN_Q      ((short)0x9100);
+import static org.junit.Assert.*;
 
-    //
-    private short value;
+import org.junit.Test;
 
-    private EthernetType(short value) {
-        this.value = value;
+public class TestEthernetType {
+    @Test
+    public void testInternetProtocol() {
+        EthernetType ip = EthernetType.IPv4;
+
+        assertEquals(0x0800, ip.getValue());
+        assertEquals("0x0800", ip.toString());
     }
 
-    public short getValue() {
-        return value;
-    }
+    @Test
+    public void testQInQ() {
+        EthernetType qinq = EthernetType.Q_IN_Q;
 
-    @Override
-    public String toString() {
-        int protocol = value & 0xFFFF;
-        return String.format("0x%04X", protocol);
+        assertEquals((short)0x9100, qinq.getValue());
+        assertEquals("0x9100", qinq.toString());
     }
 }
