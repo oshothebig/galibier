@@ -184,4 +184,10 @@ public enum ProtocolNumber {
     public byte getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        int protocol = value & 0xFF;
+        return String.valueOf(protocol);
+    }
 }
