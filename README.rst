@@ -41,6 +41,14 @@ openflowj have been developed in Stanford University.
    cd galibier
    mvn package
 
+Act as a repeater hub
+----------------------
+::
+
+  java -cp target/galibier-controller-0.1.0-devel-jar-wi-dependencies.jar \
+  org.galibier.example.Hub
+
+
 Run the benchmark
 -----------------
 ::
