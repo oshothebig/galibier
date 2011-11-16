@@ -39,28 +39,36 @@ public class EnumUtil {
 
     public static EnumSet<OFCapabilities> parseCapabilities(int bitCapabilities) {
         EnumSet<OFFeaturesReply.OFCapabilities> capabilities = EnumSet.noneOf(OFFeaturesReply.OFCapabilities.class);
-        
+
+        //  Flow statistics supported?
         if ((bitCapabilities & OFCapabilities.OFPC_FLOW_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_FLOW_STATS);
         }
+        //  Table statistics supported?
         if ((bitCapabilities & OFCapabilities.OFPC_TABLE_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_TABLE_STATS);
         }
+        //  Port statistics supported?
         if ((bitCapabilities & OFCapabilities.OFPC_PORT_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_PORT_STATS);
         }
+        //  Spanning Tree Protocol (STP) supported?
         if ((bitCapabilities & OFCapabilities.OFPC_STP.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_STP);
         }
+        //  Reserved supported?
         if ((bitCapabilities & OFCapabilities.OFPC_RESERVED.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_RESERVED);
         }
+        //  IP packet reassemble supported?
         if ((bitCapabilities & OFCapabilities.OFPC_IP_REASM.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_IP_REASM);
         }
+        //  Queue statistics supported?
         if ((bitCapabilities & OFCapabilities.OFPC_QUEUE_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_QUEUE_STATS);
         }
+        //  ARP matching supported?
         if ((bitCapabilities & OFCapabilities.OFPC_ARP_MATCH_IP.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_ARP_MATCH_IP);
         }
@@ -78,40 +86,52 @@ public class EnumUtil {
 
     public static EnumSet<OFActionType> parseActions(int bitActions) {
         EnumSet<OFActionType> actions = EnumSet.noneOf(OFActionType.class);
-        
+
+        //  Output supported?
         if ((bitActions & (1 << OFActionType.OUTPUT.getTypeValue())) != 0) {
             actions.add(OFActionType.OUTPUT);
         }
+        //  Setting VLAN ID supported?
         if ((bitActions & (1 << OFActionType.SET_VLAN_VID.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_VLAN_VID);
         }
+        //  Setting VLAN PCP supported?
         if ((bitActions & (1 << OFActionType.SET_VLAN_PCP.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_VLAN_PCP);
         }
+        //  Stripping VLAN tag supported?
         if ((bitActions & (1 << OFActionType.STRIP_VLAN.getTypeValue())) != 0) {
             actions.add(OFActionType.STRIP_VLAN);
         }
+        //  Setting Layer-2 source address supported?
         if ((bitActions & (1 << OFActionType.SET_DL_SRC.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_DL_SRC);
         }
+        //  Setting Layer-2 destination address supported?
         if ((bitActions & (1 << OFActionType.SET_DL_DST.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_DL_DST);
         }
+        //  Setting IP source address supported?
         if ((bitActions & (1 << OFActionType.SET_NW_SRC.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_NW_SRC);
         }
+        //  Setting IP destination address supported?
         if ((bitActions & (1 << OFActionType.SET_NW_DST.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_NW_DST);
         }
+        //  Setting TOS field supported?
         if ((bitActions & (1 << OFActionType.SET_NW_TOS.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_NW_TOS);
         }
+        //  Setting source TCP/UDP port supported?
         if ((bitActions & (1 << OFActionType.SET_TP_SRC.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_TP_SRC);
         }
+        //  Setting destination TCP/UDP port supported?
         if ((bitActions & (1 << OFActionType.SET_TP_DST.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_TP_DST);
         }
+        //  Enqueue supported?
         if ((bitActions & (1 << OFActionType.OPAQUE_ENQUEUE.getTypeValue())) != 0) {
             actions.add(OFActionType.OPAQUE_ENQUEUE);
         }
