@@ -38,38 +38,30 @@ public class EnumUtil {
     private EnumUtil() {}
 
     public static EnumSet<OFCapabilities> parseCapabilities(int bitCapabilities) {
-        boolean isFlowStatsSupported = (bitCapabilities & OFCapabilities.OFPC_FLOW_STATS.getValue()) != 0;
-        boolean isTableStatsSupported = (bitCapabilities & OFCapabilities.OFPC_TABLE_STATS.getValue()) != 0;
-        boolean isPortStatsSupported = (bitCapabilities & OFCapabilities.OFPC_PORT_STATS.getValue()) != 0;
-        boolean isSTPSupported = (bitCapabilities & OFCapabilities.OFPC_STP.getValue()) != 0;
-        boolean isReservedSupported = (bitCapabilities & OFCapabilities.OFPC_RESERVED.getValue()) != 0;
-        boolean isIPReassembleSupported = (bitCapabilities & OFCapabilities.OFPC_IP_REASM.getValue()) != 0;
-        boolean isQueueStatsSupported = (bitCapabilities & OFCapabilities.OFPC_QUEUE_STATS.getValue()) != 0;
-        boolean isArpMatchIPSupported = (bitCapabilities & OFCapabilities.OFPC_ARP_MATCH_IP.getValue()) != 0;
-
         EnumSet<OFFeaturesReply.OFCapabilities> capabilities = EnumSet.noneOf(OFFeaturesReply.OFCapabilities.class);
-        if (isFlowStatsSupported) {
+        
+        if ((bitCapabilities & OFCapabilities.OFPC_FLOW_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_FLOW_STATS);
         }
-        if (isTableStatsSupported) {
+        if ((bitCapabilities & OFCapabilities.OFPC_TABLE_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_TABLE_STATS);
         }
-        if (isPortStatsSupported) {
+        if ((bitCapabilities & OFCapabilities.OFPC_PORT_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_PORT_STATS);
         }
-        if (isSTPSupported) {
+        if ((bitCapabilities & OFCapabilities.OFPC_STP.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_STP);
         }
-        if (isReservedSupported) {
+        if ((bitCapabilities & OFCapabilities.OFPC_RESERVED.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_RESERVED);
         }
-        if (isIPReassembleSupported) {
+        if ((bitCapabilities & OFCapabilities.OFPC_IP_REASM.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_IP_REASM);
         }
-        if (isQueueStatsSupported) {
+        if ((bitCapabilities & OFCapabilities.OFPC_QUEUE_STATS.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_QUEUE_STATS);
         }
-        if (isArpMatchIPSupported) {
+        if ((bitCapabilities & OFCapabilities.OFPC_ARP_MATCH_IP.getValue()) != 0) {
             capabilities.add(OFFeaturesReply.OFCapabilities.OFPC_ARP_MATCH_IP);
         }
 
@@ -85,54 +77,42 @@ public class EnumUtil {
     }
 
     public static EnumSet<OFActionType> parseActions(int bitActions) {
-        boolean isOutputSupported = (bitActions & (1 << OFActionType.OUTPUT.getTypeValue())) != 0;
-        boolean isSetVlanIdSupported = (bitActions & (1 << OFActionType.SET_VLAN_VID.getTypeValue())) != 0;
-        boolean isSetVlanPcpSupported = (bitActions & (1 << OFActionType.SET_VLAN_PCP.getTypeValue())) != 0;
-        boolean isStripVlanSupported = (bitActions & (1 << OFActionType.STRIP_VLAN.getTypeValue())) != 0;
-        boolean isSetDlSrcSupported = (bitActions & (1 << OFActionType.SET_DL_SRC.getTypeValue())) != 0;
-        boolean isSetDlDstSupported = (bitActions & (1 << OFActionType.SET_DL_DST.getTypeValue())) != 0;
-        boolean isSetNwSrcSupported = (bitActions & (1 << OFActionType.SET_NW_SRC.getTypeValue())) != 0;
-        boolean isSetNwDstSupported = (bitActions & (1 << OFActionType.SET_NW_DST.getTypeValue())) != 0;
-        boolean isSetNwTosSupported = (bitActions & (1 << OFActionType.SET_NW_TOS.getTypeValue())) != 0;
-        boolean isSetTpSrcSupported = (bitActions & (1 << OFActionType.SET_TP_SRC.getTypeValue())) != 0;
-        boolean isSetTpDstSupported = (bitActions & (1 << OFActionType.SET_TP_DST.getTypeValue())) != 0;
-        boolean isEnqueueSupported = (bitActions & (1 << OFActionType.OPAQUE_ENQUEUE.getTypeValue())) != 0;
-
         EnumSet<OFActionType> actions = EnumSet.noneOf(OFActionType.class);
-        if (isOutputSupported) {
+        
+        if ((bitActions & (1 << OFActionType.OUTPUT.getTypeValue())) != 0) {
             actions.add(OFActionType.OUTPUT);
         }
-        if (isSetVlanIdSupported) {
+        if ((bitActions & (1 << OFActionType.SET_VLAN_VID.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_VLAN_VID);
         }
-        if (isSetVlanPcpSupported) {
+        if ((bitActions & (1 << OFActionType.SET_VLAN_PCP.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_VLAN_PCP);
         }
-        if (isStripVlanSupported) {
+        if ((bitActions & (1 << OFActionType.STRIP_VLAN.getTypeValue())) != 0) {
             actions.add(OFActionType.STRIP_VLAN);
         }
-        if (isSetDlSrcSupported) {
+        if ((bitActions & (1 << OFActionType.SET_DL_SRC.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_DL_SRC);
         }
-        if (isSetDlDstSupported) {
+        if ((bitActions & (1 << OFActionType.SET_DL_DST.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_DL_DST);
         }
-        if (isSetNwSrcSupported) {
+        if ((bitActions & (1 << OFActionType.SET_NW_SRC.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_NW_SRC);
         }
-        if (isSetNwDstSupported) {
+        if ((bitActions & (1 << OFActionType.SET_NW_DST.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_NW_DST);
         }
-        if (isSetNwTosSupported) {
+        if ((bitActions & (1 << OFActionType.SET_NW_TOS.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_NW_TOS);
         }
-        if (isSetTpSrcSupported) {
+        if ((bitActions & (1 << OFActionType.SET_TP_SRC.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_TP_SRC);
         }
-        if (isSetTpDstSupported) {
+        if ((bitActions & (1 << OFActionType.SET_TP_DST.getTypeValue())) != 0) {
             actions.add(OFActionType.SET_TP_DST);
         }
-        if (isEnqueueSupported) {
+        if ((bitActions & (1 << OFActionType.OPAQUE_ENQUEUE.getTypeValue())) != 0) {
             actions.add(OFActionType.OPAQUE_ENQUEUE);
         }
 
