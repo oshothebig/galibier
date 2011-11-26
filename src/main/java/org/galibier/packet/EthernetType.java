@@ -25,12 +25,6 @@
 
 package org.galibier.packet;
 
-import com.google.common.collect.Maps;
-import org.openflow.protocol.OFType;
-
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * EthernetHeader type assignment is listed in
  * http://www.iana.org/assignments/ethernet-numbers
