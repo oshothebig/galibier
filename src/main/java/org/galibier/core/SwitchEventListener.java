@@ -29,7 +29,7 @@ import org.openflow.protocol.OFFlowRemoved;
 import org.openflow.protocol.OFPacketIn;
 import org.openflow.protocol.OFPortStatus;
 
-public interface EventListener {
+public interface SwitchEventListener {
     /**
      * It is called when the switch is connected to the controller and the handshake is completed.
      * @param sw The switch connected to the controller.

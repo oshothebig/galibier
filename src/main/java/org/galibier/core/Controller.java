@@ -48,8 +48,8 @@ public class Controller {
     private final ConcurrentMap<Long, Switch> handshakedSwitches =
             new ConcurrentHashMap<Long, Switch>(DEFAULT_SWITCHES);
 
-    private final CopyOnWriteArrayList<EventListener> eventListeners =
-            new CopyOnWriteArrayList<EventListener>();
+    private final CopyOnWriteArrayList<SwitchEventListener> eventListeners =
+            new CopyOnWriteArrayList<SwitchEventListener>();
     private final CopyOnWriteArrayList<VendorListener> vendorListeners =
             new CopyOnWriteArrayList<VendorListener>();
     private final ScheduledExecutorService timer =
@@ -97,7 +97,7 @@ public class Controller {
 
         //  TODO: is ordering of invocation of listeners needed ?
         //  TODO: is concurrent invocation of listeners needed ?
-        for (EventListener listener: eventListeners) {
+        for (SwitchEventListener listener: eventListeners) {
             listener.switchConnected(sw);
         }
     }
@@ -112,7 +112,7 @@ public class Controller {
 
         //  TODO: is ordering of invocation of listeners needed ?
         //  TODO: is concurrent invocation of listeners needed ?
-        for (EventListener listener: eventListeners) {
+        for (SwitchEventListener listener: eventListeners) {
             listener.switchDisconnected(sw);
         }
     }
@@ -123,7 +123,7 @@ public class Controller {
      * @param in The PACKET_IN message
      */
     public void handlePacketIn(Switch sw, OFPacketIn in) {
-        for (EventListener listener: eventListeners) {
+        for (SwitchEventListener listener: eventListeners) {
             listener.handlePacketIn(sw, in);
         }
     }
@@ -134,7 +134,7 @@ public class Controller {
      * @param in The FLOW_REMOVED message
      */
     public void handleFlowRemoved(Switch sw, OFFlowRemoved in) {
-        for (EventListener listener: eventListeners) {
+        for (SwitchEventListener listener: eventListeners) {
             listener.handleFlowRemoved(sw, in);
         }
     }
@@ -145,7 +145,7 @@ public class Controller {
      * @param in The PORT_STATUS message
      */
     public void handlePortStatus(Switch sw, OFPortStatus in) {
-        for (EventListener listener: eventListeners) {
+        for (SwitchEventListener listener: eventListeners) {
             listener.handlePortStatus(sw, in);
         }
     }
@@ -165,7 +165,7 @@ public class Controller {
      * Registers the event listener to the controller.
      * @param listener The event listener to be registered
      */
-    public void addEventListener(EventListener listener) {
+    public void addEventListener(SwitchEventListener listener) {
         Preconditions.checkNotNull(listener);
 
         eventListeners.addIfAbsent(listener);
@@ -175,7 +175,7 @@ public class Controller {
      * Unregisters the event listener from the controller.
      * @param listener The event listener to be unregisteed
      */
-    public void removeEventListener(EventListener listener) {
+    public void removeEventListener(SwitchEventListener listener) {
         Preconditions.checkNotNull(listener);
 
         eventListeners.remove(listener);

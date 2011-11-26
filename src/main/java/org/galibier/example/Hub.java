@@ -27,7 +27,7 @@ package org.galibier.example;
 
 import org.galibier.core.Constants;
 import org.galibier.core.Controller;
-import org.galibier.core.EventListener;
+import org.galibier.core.SwitchEventListener;
 import org.galibier.core.Switch;
 import org.openflow.protocol.*;
 import org.openflow.protocol.action.OFAction;
@@ -37,7 +37,7 @@ import org.openflow.protocol.factory.OFMessageFactory;
 
 import java.util.Collections;
 
-public class Hub implements EventListener {
+public class Hub implements SwitchEventListener {
     private Controller controller;
     private final OFMessageFactory factory = new BasicFactory();
 
