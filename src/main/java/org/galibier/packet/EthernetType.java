@@ -25,34 +25,22 @@
 
 package org.galibier.packet;
 
+import com.google.common.collect.Maps;
+import org.openflow.protocol.OFType;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Ethernet type assignment is listed in
+ * EthernetHeader type assignment is listed in
  * http://www.iana.org/assignments/ethernet-numbers
  */
-public enum EthernetType {
-    IPv4        ((short)0x0800),
-    ARP         ((short)0x0806),
-    TAG_VLAN    ((short)0x8100),
-    RARP        ((short)0x8035),
-    IPv6        ((short)0x86DD),
-    MAC_IN_MAC  ((short)0x88A8),
-    LLDP        ((short)0x88CC),
-    Q_IN_Q      ((short)0x9100);
-
-    //
-    private short value;
-
-    private EthernetType(short value) {
-        this.value = value;
-    }
-
-    public short getValue() {
-        return value;
-    }
-
-    @Override
-    public String toString() {
-        int protocol = value & 0xFFFF;
-        return String.format("0x%04X", protocol);
-    }
+public class EthernetType {
+    public static final short IPv4          = (short)0x0800;
+    public static final short ARP           = (short)0x0806;
+    public static final short TAG_VLAN      = (short)0x8100;
+    public static final short IPv6          = (short)0x86DD;
+    public static final short MAC_IN_MAC    = (short)0x88A8;
+    public static final short LLDP          = (short)0x88CC;
+    public static final short Q_IN_Q        = (short)0x9100;
 }
