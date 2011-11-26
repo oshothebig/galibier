@@ -37,7 +37,7 @@ public class MACAddress {
     //  preventing to create a instance
     private MACAddress() {}
 
-    public static MACAddress getByAddress(String address) {
+    public static MACAddress valueOf(String address) {
         String[] elements = address.split(":");
         Preconditions.checkArgument(elements.length == MAC_ADDRESS_LENGTH);
 
@@ -50,7 +50,7 @@ public class MACAddress {
         return instance;
     }
 
-    public static MACAddress getByAddress(byte[] address) {
+    public static MACAddress valueOf(byte[] address) {
         Preconditions.checkArgument(address.length == MAC_ADDRESS_LENGTH);
 
         MACAddress instance = new MACAddress();

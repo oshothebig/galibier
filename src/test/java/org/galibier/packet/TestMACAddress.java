@@ -32,32 +32,32 @@ import static org.junit.Assert.assertEquals;
 public class TestMACAddress {
     @Test
     public void getByAddress() {
-        MACAddress sa1 = MACAddress.getByAddress("00:01:02:03:04:05");
-        MACAddress ba1 = MACAddress.getByAddress(new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05});
+        MACAddress sa1 = MACAddress.valueOf("00:01:02:03:04:05");
+        MACAddress ba1 = MACAddress.valueOf(new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05});
         assertEquals(sa1, ba1);
 
-        MACAddress sa2 = MACAddress.getByAddress("FF:FE:FD:10:20:30");
-        MACAddress ba2 = MACAddress.getByAddress(new byte[]{(byte) 0xFF, (byte) 0xFE, (byte) 0xFD, 0x10, 0x20, 0x30});
+        MACAddress sa2 = MACAddress.valueOf("FF:FE:FD:10:20:30");
+        MACAddress ba2 = MACAddress.valueOf(new byte[]{(byte) 0xFF, (byte) 0xFE, (byte) 0xFD, 0x10, 0x20, 0x30});
         assertEquals(sa2,ba2);
     }
 
     @Test(expected = NumberFormatException.class)
     public void illegalFormat() {
-        MACAddress addr = MACAddress.getByAddress("0T:00:01:02:03:04");
+        MACAddress addr = MACAddress.valueOf("0T:00:01:02:03:04");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void longStringFields() {
-        MACAddress addr = MACAddress.getByAddress("00:01:02:03:04:05:06");
+        MACAddress addr = MACAddress.valueOf("00:01:02:03:04:05:06");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shortStringFields() {
-        MACAddress addr = MACAddress.getByAddress("00:01:02:03:04");
+        MACAddress addr = MACAddress.valueOf("00:01:02:03:04");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void getAddressArgumentCount2() {
-        MACAddress addr = MACAddress.getByAddress(new byte[]{0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06});
+        MACAddress addr = MACAddress.valueOf(new byte[]{0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06});
     }
 }
