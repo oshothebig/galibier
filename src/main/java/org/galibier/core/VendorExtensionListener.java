@@ -27,6 +27,6 @@ package org.galibier.core;
 
 import org.openflow.protocol.OFVendor;
 
-public interface VendorListener {
+public interface VendorExtensionListener {
     public void handleVendorExtension(Switch sw, OFVendor in);
 }
