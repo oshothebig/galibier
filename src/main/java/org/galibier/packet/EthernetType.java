@@ -30,11 +30,11 @@ package org.galibier.packet;
  * http://www.iana.org/assignments/ethernet-numbers
  */
 public class EthernetType {
-    public static final short IPv4          = (short)0x0800;
-    public static final short ARP           = (short)0x0806;
-    public static final short TAG_VLAN      = (short)0x8100;
-    public static final short IPv6          = (short)0x86DD;
-    public static final short MAC_IN_MAC    = (short)0x88A8;
-    public static final short LLDP          = (short)0x88CC;
-    public static final short Q_IN_Q        = (short)0x9100;
+    public static final int IPv4          = 0x0800;
+    public static final int ARP           = 0x0806;
+    public static final int TAG_VLAN      = 0x8100;
+    public static final int IPv6          = 0x86DD;
+    public static final int MAC_IN_MAC    = 0x88A8;
+    public static final int LLDP          = 0x88CC;
+    public static final int Q_IN_Q        = 0x9100;
 }

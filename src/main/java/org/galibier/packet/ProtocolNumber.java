@@ -30,16 +30,16 @@ package org.galibier.packet;
  * http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml
  */
 public class ProtocolNumber {
-    public static final byte ICMP       = (byte)1;
-    public static final byte IGMP       = (byte)2;
-    public static final byte IPv4       = (byte)4;
-    public static final byte TCP        = (byte)6;
-    public static final byte UDP        = (byte)17;
-    public static final byte IPv6       = (byte)41;
-    public static final byte RSVP       = (byte)46;
-    public static final byte GRE        = (byte)47;
-    public static final byte OSPF       = (byte)89;
-    public static final byte L2TP       = (byte)115;
-    public static final byte STP        = (byte)118;
-    public static final byte SCTP       = (byte)132;
+    public static final int ICMP       = 1;
+    public static final int IGMP       = 2;
+    public static final int IPv4       = 4;
+    public static final int TCP        = 6;
+    public static final int UDP        = 17;
+    public static final int IPv6       = 41;
+    public static final int RSVP       = 46;
+    public static final int GRE        = 47;
+    public static final int OSPF       = 89;
+    public static final int L2TP       = 115;
+    public static final int STP        = 118;
+    public static final int SCTP       = 132;
 }
