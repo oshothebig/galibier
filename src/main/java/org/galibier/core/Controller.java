@@ -50,8 +50,8 @@ public class Controller {
 
     private final CopyOnWriteArrayList<SwitchEventListener> eventListeners =
             new CopyOnWriteArrayList<SwitchEventListener>();
-    private final CopyOnWriteArrayList<VendorListener> vendorListeners =
-            new CopyOnWriteArrayList<VendorListener>();
+    private final CopyOnWriteArrayList<VendorExtensionListener> vendorListeners =
+            new CopyOnWriteArrayList<VendorExtensionListener>();
     private final ScheduledExecutorService timer =
             Executors.newSingleThreadScheduledExecutor();
 
@@ -156,7 +156,7 @@ public class Controller {
      * @param in The VENDOR message
      */
     public void handleVendorExtension(Switch sw, OFVendor in) {
-        for (VendorListener listener: vendorListeners) {
+        for (VendorExtensionListener listener: vendorListeners) {
             listener.handleVendorExtension(sw, in);
         }
     }
@@ -185,7 +185,7 @@ public class Controller {
      * Registers the vendor listener to the controller.
      * @param listener The vendor listener to be registered
      */
-    public void addVendorListener(VendorListener listener) {
+    public void addVendorListener(VendorExtensionListener listener) {
         Preconditions.checkNotNull(listener);
 
         vendorListeners.addIfAbsent(listener);
@@ -195,7 +195,7 @@ public class Controller {
      * Unregisters the vendor listener from the controller.
      * @param listener The vendor listener to be unregistered
      */
-    public void removeVendorListener(VendorListener listener) {
+    public void removeVendorListener(VendorExtensionListener listener) {
         Preconditions.checkNotNull(listener);
 
         vendorListeners.remove(listener);
