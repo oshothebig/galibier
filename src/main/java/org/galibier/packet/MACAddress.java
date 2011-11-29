@@ -25,13 +25,16 @@
 
 package org.galibier.packet;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class MACAddress {
-    private static final int MAC_ADDRESS_LENGTH = 6;
+    public static final int MAC_ADDRESS_LENGTH = 6;
     private final byte[] address = new byte[MAC_ADDRESS_LENGTH];
 
     //  preventing to create a instance
@@ -73,5 +76,14 @@ public class MACAddress {
     @Override
     public int hashCode() {
         return Arrays.hashCode(this.address);
+    }
+
+    @Override
+    public String toString() {
+        List<String> elements = Lists.newArrayList();
+        for (byte b: address) {
+            elements.add(String.format("%02X", b & 0xFF));
+        }
+        return Joiner.on(":").join(elements);
     }
 }
