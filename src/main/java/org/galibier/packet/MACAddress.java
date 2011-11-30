@@ -35,7 +35,7 @@ import java.util.List;
 
 public class MACAddress {
     public static final int MAC_ADDRESS_LENGTH = 6;
-    private final byte[] address = new byte[MAC_ADDRESS_LENGTH];
+    private byte[] address = new byte[MAC_ADDRESS_LENGTH];
 
     //  preventing to create a instance
     private MACAddress() {}
@@ -57,11 +57,13 @@ public class MACAddress {
         Preconditions.checkArgument(address.length == MAC_ADDRESS_LENGTH);
 
         MACAddress instance = new MACAddress();
-        for (int i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-            instance.address[i] = address[i];
-        }
+        instance.address = Arrays.copyOf(address, MAC_ADDRESS_LENGTH);
 
         return instance;
+    }
+
+    public byte[] toBytes() {
+        return Arrays.copyOf(address, address.length);
     }
 
     @Override
