@@ -393,14 +393,12 @@ public class OpenFlowControllerHandler extends SimpleChannelUpstreamHandler impl
 
     @Override
     public InetSocketAddress remoteAddress() {
-        //  TODO: check if cast below is safe or not.
         //  current OpenFlow protocol does not support UDP/IP
         return (InetSocketAddress)channel.getRemoteAddress();
     }
 
     @Override
     public InetSocketAddress localAddress() {
-        //  TODO: check if cast below is safe or not.
         //  current OpenFlow protocol does not support UDP/IP
         return (InetSocketAddress)channel.getLocalAddress();
     }

@@ -208,7 +208,6 @@ public class Controller {
         Preconditions.checkNotNull(msg);
 
         long datapathId = sw.dataPathId();
-        //  TODO: have to write codes to send packets
         Switch lookup = handshakedSwitches.get(datapathId);
         if (lookup == null) {
             log.warn("Switch (DPID={}) is already disconnected from the controller", sw.dataPathId());
