@@ -44,7 +44,7 @@ Act as a repeater hub
 ----------------------
 ::
 
-  java -cp target/galibier-controller-0.1.0-devel-jar-wi-dependencies.jar \
+  java -cp target/galibier-controller-0.1.0-devel-jar-with-dependencies.jar \
   org.galibier.example.Hub
 
 
