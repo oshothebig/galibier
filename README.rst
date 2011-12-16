@@ -12,9 +12,8 @@ controllers.
 
 OpenFlow controller
 -------------------
-Galibier is still under development and unfortunately the implementation of
-OpenFlow controller is not included now. Currently, Galibier provides only a
-benchmark program for evaluating OpenFlow controllers.
+Galibier is still under development. It provides an OpenFlow controller and 
+a benchmark program for evaluating OpenFlow controllers.
 
 How to build
 ------------
